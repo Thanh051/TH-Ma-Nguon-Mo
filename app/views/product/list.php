@@ -1,27 +1,38 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Danh sách sản phẩm</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-</head>
-<body class="container mt-4">
+<?php include 'app/views/shares/header.php'; ?>
+
+<div class="container mt-4">
     <h1 class="mb-4">Danh sách sản phẩm</h1>
-    <a href="/project1/Product/add" class="btn btn-success mb-3">➕ Thêm sản phẩm mới</a>
+    <a href="/Product/add" class="btn btn-success mb-3">➕ Thêm sản phẩm mới</a>
     <div class="row">
         <?php foreach ($products as $product): ?>
-            <div class="col-md-4">
-                <div class="card mb-4 shadow-sm">
-                    <img src="<?php echo $product->getImage() ?: 'https://via.placeholder.com/300x200'; ?>" class="card-img-top" alt="Product Image">
-                    <div class="card-body">
-                        <h5 class="card-title"><?php echo htmlspecialchars($product->getName(), ENT_QUOTES, 'UTF-8'); ?></h5>
-                        <p class="card-text"><?php echo htmlspecialchars($product->getDescription(), ENT_QUOTES, 'UTF-8'); ?></p>
-                        <p class="text-danger fw-bold"><?php echo number_format($product->getPrice(), 0, ',', '.'); ?> VND</p>
-                        <a href="/project1/Product/edit/<?php echo $product->getID(); ?>" class="btn btn-primary">✏️ Sửa</a>
-                        <a href="/project1/Product/delete/<?php echo $product->getID(); ?>" class="btn btn-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">🗑️ Xóa</a>
-                    </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <?php if ($product->image): ?>
+                <img src="/<?php echo $product->image; ?>" class="card-img-top" alt="Product Image">
+                <?php else: ?>
+                <img src="https://via.placeholder.com/150" class="card-img-top" alt="No Image">
+                <?php endif; ?>
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <a href="/Product/show/<?php echo $product->id; ?>" class="text-decoration-none">
+                            <?php echo htmlspecialchars($product->name, ENT_QUOTES, 'UTF-8'); ?>
+                        </a>
+                    </h5>
+                    <p class="card-text text-muted">
+                        <?php echo htmlspecialchars($product->description, ENT_QUOTES, 'UTF-8'); ?>
+                    </p>
+                    <p><strong>Giá:</strong> <?php echo htmlspecialchars($product->price, ENT_QUOTES, 'UTF-8'); ?> VND</p>
+                    <p><strong>Danh mục:</strong> <?php echo htmlspecialchars($product->category_name, ENT_QUOTES, 'UTF-8'); ?></p>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <a href="/Product/edit/<?php echo $product->id; ?>" class="btn btn-warning btn-sm">✏️ Sửa</a>
+                    <a href="/Product/delete/<?php echo $product->id; ?>" class="btn btn-danger btn-sm"
+                       onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');">🗑️ Xóa</a>
                 </div>
             </div>
+        </div>
         <?php endforeach; ?>
     </div>
-</body>
-</html>
+</div>
+
+<?php include 'app/views/shares/footer.php'; ?>
