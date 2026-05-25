@@ -1,60 +1,55 @@
-<?php include 'app/views/shares/header.php'; ?>
+<?php require_once 'app/views/shares/header.php'; ?>
 
-<div class="container mt-4">
-    <div class="card shadow-lg">
-        <div class="card-header bg-primary text-white">
-            <h3 class="mb-0">Thêm sản phẩm mới</h3>
-        </div>
-        <div class="card-body">
-            <?php if (!empty($errors)): ?>
-            <div class="alert alert-danger">
-                <ul class="mb-0">
-                    <?php foreach ($errors as $error): ?>
-                    <li><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
-                    <?php endforeach; ?>
-                </ul>
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-success text-white fw-bold py-3 fs-5">
+                ➕ THÊM SẢN PHẨM MỚI
             </div>
-            <?php endif; ?>
+            <div class="card-body p-4">
+                <form action="/index.php?url=product/add" method="POST" enctype="multipart/form-data">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary">Tên Sản Phẩm</label>
+                        <input type="text" name="name" class="form-control" placeholder="Ví dụ: iPhone 15 Pro Max" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary">Giá Sản Phẩm (đ)</label>
+                        <input type="number" name="price" class="form-control" placeholder="Nhập số tiền bán lẻ" required>
+                    </div>
 
-            <form method="POST" action="/Product/save" enctype="multipart/form-data" onsubmit="return validateForm();">
-                <div class="form-group mb-3">
-                    <label for="name" class="form-label">Tên sản phẩm</label>
-                    <input type="text" id="name" name="name" class="form-control" placeholder="Nhập tên sản phẩm..." required>
-                </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary">Danh Mục Phân Loại</label>
+                        <select name="category_id" class="form-select" required>
+                            <option value="">-- Chọn danh mục sản phẩm --</option>
+                            <?php if (!empty($categories)): ?>
+                                <?php foreach($categories as $c): ?>
+                                    <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['name']) ?></option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </div>
 
-                <div class="form-group mb-3">
-                    <label for="description" class="form-label">Mô tả</label>
-                    <textarea id="description" name="description" class="form-control" rows="3" placeholder="Mô tả chi tiết..." required></textarea>
-                </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary">Hình ảnh sản phẩm</label>
+                        <input type="file" name="image" class="form-control" accept="image/*" required>
+                        <small class="text-muted">Hỗ trợ các định dạng file: .jpg, .jpeg, .png, .webp</small>
+                    </div>
 
-                <div class="form-group mb-3">
-                    <label for="price" class="form-label">Giá</label>
-                    <input type="number" id="price" name="price" class="form-control" placeholder="Nhập giá sản phẩm..." step="0.01" min="0" required>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-secondary">Mô tả thông số kỹ thuật</label>
+                        <textarea name="description" class="form-control" rows="4" placeholder="Nhập thông số chi tiết..."></textarea>
+                    </div>
 
-                <div class="form-group mb-3">
-                    <label for="category_id" class="form-label">Danh mục</label>
-                    <select id="category_id" name="category_id" class="form-select" required>
-                        <option value="">-- Chọn danh mục --</option>
-                        <?php foreach ($categories as $category): ?>
-                        <option value="<?php echo $category->id; ?>">
-                            <?php echo htmlspecialchars($category->name, ENT_QUOTES, 'UTF-8'); ?>
-                        </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div class="form-group mb-3">
-                    <label for="image" class="form-label">Hình ảnh</label>
-                    <input type="file" id="image" name="image" class="form-control">
-                </div>
-
-                <div class="d-flex justify-content-between">
-                    <button type="submit" class="btn btn-success">➕ Thêm sản phẩm</button>
-                    <a href="/Product/list" class="btn btn-secondary">⬅ Quay lại danh sách</a>
-                </div>
-            </form>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success w-100 fw-bold py-2 shadow-sm">LƯU SẢN PHẨM</button>
+                        <a href="/index.php?url=product/admin" class="btn btn-secondary w-50 fw-bold py-2">HỦY BỎ</a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
-<?php include 'app/views/shares/footer.php'; ?>
+<?php require_once 'app/views/shares/footer.php'; ?>
