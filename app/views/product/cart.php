@@ -1,11 +1,17 @@
 <?php require_once 'app/views/shares/header.php'; ?>
 
+<?php
+if (!isset($current_cart)) {
+    $current_cart = [];
+}
+?>
+
 <div class="card border-0 shadow-sm rounded-3">
     <div class="card-header bg-blue-tgdd text-white fw-bold py-3 fs-5">
         🛒 GIỎ HÀNG CỦA BẠN
     </div>
     <div class="card-body p-4">
-        <?php if(empty($_SESSION['cart'])): ?>
+        <?php if(empty($current_cart)): ?>
             <div class="text-center py-5">
                 <h5 class="text-muted mb-4">Giỏ hàng của bạn đang trống!</h5>
                 <a href="/index.php" class="btn btn-blue-tgdd fw-bold px-4 py-2">TIẾP TỤC MUA SẮM</a>
@@ -23,7 +29,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php $total = 0; foreach($_SESSION['cart'] as $id => $item): $total += $item['price'] * $item['qty']; ?>
+                        <?php 
+                        $total = 0; 
+                        // Chạy vòng lặp mượt mà dựa trên dữ liệu tầng Controller cung cấp
+                        foreach($current_cart as $id => $item): 
+                            $total += $item['price'] * $item['qty']; 
+                        ?>
                             <tr>
                                 <td>
                                     <img src="public/images/<?= $item['image'] ?>" class="img-thumbnail" style="width: 60px; height: 60px; object-fit: contain;" onerror="this.src='public/images/default.jpg';">

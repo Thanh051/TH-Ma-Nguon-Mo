@@ -1,7 +1,7 @@
 <?php
 class Database {
     private $host = "localhost";
-    private $db_name = "ttg_store";
+    private $db_name = "My_Store";
     private $username = "root"; // Đổi nếu bạn dùng mật khẩu khác
     private $password = "";     
     public $conn;

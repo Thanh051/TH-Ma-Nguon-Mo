@@ -1,5 +1,13 @@
 <?php require_once 'app/views/shares/header.php'; ?>
 
+<?php
+// ĐỒNG BỘ VỚI CONTROLLER:
+// Biến $current_cart đã được ProductController lấy từ Database (hoặc session khách) và truyền sẵn sang đây.
+if (!isset($current_cart)) {
+    $current_cart = [];
+}
+?>
+
 <div class="row">
     <div class="col-md-6 mb-4">
         <div class="card border-0 shadow-sm rounded-3">
@@ -38,7 +46,11 @@
             </div>
             <div class="card-body p-4">
                 <ul class="list-group list-group-flush mb-3">
-                    <?php $total = 0; foreach($_SESSION['cart'] as $item): $total += $item['price'] * $item['qty']; ?>
+                    <?php 
+                    $total = 0; 
+                    foreach($current_cart as $id => $item): 
+                        $total += $item['price'] * $item['qty']; 
+                    ?>
                         <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
                             <div>
                                 <span class="fw-bold text-dark"><?= htmlspecialchars($item['name']) ?></span>
