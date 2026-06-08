@@ -1,73 +1,89 @@
 <?php
 session_start();
 
-// Bật hiển thị lỗi tối đa để nếu có lỗi cú pháp ở Model/Controller, PHP sẽ báo ngay lập tức
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Khởi tạo giỏ hàng nếu chưa có
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
 }
 
-// Router tiếp nhận URL từ query string index.php?url=...
-$rawUrl = isset($_GET['url']) ? rtrim($_GET['url'], '/') : 'product/index';
+$rawUrl = $_GET['url'] ?? '';
+$rawUrl = trim($rawUrl, '/');
+$url = $rawUrl === '' ? [] : explode('/', $rawUrl);
 
-// FIX LỖI: Loại bỏ phần query string phía sau dấu & (nếu có) để không làm sai lệch Action
-if (strpos($rawUrl, '&') !== false) {
-    $rawUrl = explode('&', $rawUrl)[0];
-}
+// ===============================
+// WEB API: mọi endpoint bắt đầu bằng /api và luôn trả JSON
+// ===============================
+if (isset($url[0]) && strtolower($url[0]) === 'api') {
+    header("Access-Control-Allow-Origin: *");
+    header("Content-Type: application/json; charset=UTF-8");
+    header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 
-$url = explode('/', $rawUrl);
+    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        http_response_code(200);
+        echo json_encode(["status" => true, "message" => "OK"], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 
-// Xác định tên Controller và Action
-$controllerName = ucfirst($url[0]) . 'Controller';
-$action = isset($url[1]) && !empty($url[1]) ? $url[1] : 'index';
+    array_shift($url); // bỏ api
+    $resource = strtolower($url[0] ?? 'product');
+    $aliases = [
+        'products' => 'product',
+        'categories' => 'category',
+        'carts' => 'cart',
+        'orders' => 'order',
+        'payments' => 'payment',
+        'accounts' => 'account',
+        'users' => 'account'
+    ];
+    $resource = $aliases[$resource] ?? $resource;
 
-// Đường dẫn tới file Controller
-$controllerFile = "app/controllers/" . $controllerName . ".php";
+    $controllerName = ucfirst($resource) . 'ApiController';
+    $controllerFile = __DIR__ . '/app/controllers/' . $controllerName . '.php';
+    $action = $url[1] ?? 'index';
 
-// KIỂM TRA: Nếu file Controller tồn tại thì mới xử lý tiếp
-if (file_exists($controllerFile)) {
+    if (is_numeric($action)) {
+        // Cho phép dạng /api/product/5 tương đương /api/product/detail/5
+        $id = $action;
+        $action = 'detail';
+    } else {
+        $id = $url[2] ?? null;
+    }
+
+    if (strpos($action, '_') !== false) {
+        $action = lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $action))));
+    }
+
+    if (!file_exists($controllerFile)) {
+        http_response_code(404);
+        echo json_encode([
+            "status" => false,
+            "message" => "Không tìm thấy API controller: $controllerName"
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
     require_once $controllerFile;
     $controller = new $controllerName();
-    
-    // Kiểm tra xem hàm (action) có tồn tại trong Controller không
-    if (method_exists($controller, $action)) {
-        
-        // Lấy tham số ID từ URL (nếu có, ví dụ /product/edit/5 thì ID là 5)
-        $id = isset($url[2]) ? $url[2] : null;
-        
-        if ($id !== null) {
-            // Nếu có tham số ID, truyền trực tiếp biến $id vào hàm
-            $controller->$action($id);
-        } else {
-            // Nếu không có tham số (như hàm add, index), gọi hàm bình thường
-            $controller->$action();
-        }
-        
-    } else {
-        header("HTTP/1.0 404 Not Found");
-        echo "<div style='text-align:center; margin-top:50px; font-family:sans-serif;'>";
-        echo "<h2 style='color:red;'>🚫 404 - KHÔNG TÌM THẤY HÀNH ĐỘNG</h2>";
-        echo "<p>Hành động <strong>'$action'</strong> không tồn tại trong hệ thống quản lý của $controllerName!</p>";
-        echo "<a href='/index.php'>Quay lại trang chủ</a>";
-        echo "</div>";
+
+    if (!method_exists($controller, $action)) {
+        http_response_code(404);
+        echo json_encode([
+            "status" => false,
+            "message" => "Endpoint /api/$resource/$action không tồn tại"
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
     }
-} else {
-    // SỬA LỖI TẠI ĐÂY: Nếu người dùng không gõ tham số url (Trang chủ thực sự), nạp ProductController
-    if (empty($_GET['url']) || $_GET['url'] === 'product/index') {
-        require_once "app/controllers/ProductController.php";
-        $controller = new ProductController();
-        $controller->index();
-    } else {
-        // Nếu cố tình gõ bậy bạ một Controller không tồn tại (Ví dụ: url=hack_he_thong) -> Trả lỗi 404 ngay lập tức
-        header("HTTP/1.0 404 Not Found");
-        echo "<div style='text-align:center; margin-top:50px; font-family:sans-serif;'>";
-        echo "<h2 style='color:red;'>🚫 404 - TRANG KHÔNG TỒN TẠI</h2>";
-        echo "<p>Đường dẫn trang quản trị hoặc chức năng bạn yêu cầu không tồn tại trên hệ thống.</p>";
-        echo "<a href='/index.php'>Quay lại trang chủ</a>";
-        echo "</div>";
-    }
+
+    $id !== null ? $controller->$action($id) : $controller->$action();
+    exit;
 }
+
+// ===============================
+// FRONTEND: chỉ trả HTML, mọi thao tác dữ liệu gọi API bằng fetch()
+// ===============================
+header("Content-Type: text/html; charset=UTF-8");
+require_once __DIR__ . '/app/views/index.html';

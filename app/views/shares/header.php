@@ -39,7 +39,7 @@ if (session_status() == PHP_SESSION_NONE) {
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-blue-tgdd mb-4 shadow-sm">
     <div class="container">
-        <a class="navbar-brand fw-bold fs-4 d-flex align-items-center gap-1 text-white" href="/index.php">
+        <a class="navbar-brand fw-bold fs-4 d-flex align-items-center gap-1 text-white" href="index.php">
             📱 TTG STORE
         </a>
         
@@ -50,31 +50,31 @@ if (session_status() == PHP_SESSION_NONE) {
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-lg-center">
                 <li class="nav-item">
-                    <a class="nav-link text-white fw-bold px-3" href="/index.php">Trang chủ</a>
+                    <a class="nav-link text-white fw-bold px-3" href="index.php">Trang chủ</a>
                 </li>
 
                 <?php if (isset($_SESSION['user']) && $_SESSION['user']['role'] === 'admin'): ?>
                     <li class="nav-item">
-                        <a class="nav-link text-warning fw-bold px-3" href="/index.php?url=product/admin"><i class="bi bi-shield-lock"></i> SP (CRUD)</a>
+                        <a class="nav-link text-warning fw-bold px-3" href="index.php?url=product/admin"><i class="bi bi-shield-lock"></i> SP (CRUD)</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-warning fw-bold px-3" href="/index.php?url=category/index">📂 DM (CRUD)</a>
+                        <a class="nav-link text-warning fw-bold px-3" href="index.php?url=category/index">📂 DM (CRUD)</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-warning fw-bold px-3" href="index.php?url=account/manageUsers"><i class="bi bi-people"></i> Thành viên</a>
                     </li>
                 <?php endif; ?>
             </ul>
             
             <div class="d-flex align-items-center mt-2 mt-lg-0 gap-3 flex-wrap">
-                <a href="/index.php?url=product/cart" class="text-white position-relative fs-4 px-2 me-2" title="Giỏ hàng của bạn">
+                <a href="index.php?url=product/cart" class="text-white position-relative fs-4 px-2 me-2" title="Giỏ hàng của bạn">
                     <i class="bi bi-cart3"></i>
                     <?php 
                         $cart_count = 0;
-                        // ĐÃ FIX: Chỉ đếm số lượng khi người dùng đã đăng nhập và tồn tại giỏ hàng trong Database
                         if (isset($_SESSION['user'])) {
                             require_once 'app/models/ProductModel.php';
                             $pm = new ProductModel();
                             $dbCart = $pm->getCartByUserId($_SESSION['user']['id']);
-                            
-                            // Đếm tổng số lượng (qty) của toàn bộ sản phẩm đang có trong cơ sở dữ liệu
                             $cart_count = array_sum(array_column($dbCart, 'qty'));
                         } 
                         
@@ -88,25 +88,37 @@ if (session_status() == PHP_SESSION_NONE) {
 
                 <?php if (isset($_SESSION['user'])): ?>
                     <div class="dropdown">
-                        <button class="btn btn-warning dropdown-toggle fw-bold text-dark rounded-pill px-3" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['user']['username']) ?>
+                        <button class="btn btn-warning dropdown-toggle fw-bold text-dark rounded-pill px-3 d-flex align-items-center gap-2" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                            <?php 
+                                // Tự động lấy ảnh đại diện từ session, nếu trống thì lấy ảnh mặc định
+                                $avatar = !empty($_SESSION['user']['avatar']) ? $_SESSION['user']['avatar'] : 'default_avatar.png';
+                            ?>
+                            <img src="public/uploads/avatars/<?= htmlspecialchars($avatar) ?>" alt="Avatar" class="rounded-circle" style="width: 24px; height: 24px; object-fit: cover; border: 1px solid rgba(0,0,0,0.1);">
+                            <span><?= htmlspecialchars($_SESSION['user']['username']) ?></span>
                             <span class="badge bg-dark text-white ms-1 small" style="font-size: 9px;"><?= strtoupper($_SESSION['user']['role']) ?></span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="userMenu">
                             <li><h6 class="dropdown-header">Xin chào, <?= htmlspecialchars($_SESSION['user']['username']) ?>!</h6></li>
+                            
+                            <li>
+                                <a class="dropdown-item py-2 small" href="index.php?url=account/profile">
+                                    <i class="bi bi-person-bounding-box me-2"></i> Hồ sơ cá nhân
+                                </a>
+                            </li>
+                            
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item text-danger fw-bold" href="/index.php?url=account/logout">
-                                    <i class="bi bi-box-arrow-right"></i> Đăng xuất
+                                <a class="dropdown-item text-danger fw-bold py-2 small" href="index.php?url=account/logout">
+                                    <i class="bi bi-box-arrow-right me-2"></i> Đăng xuất
                                 </a>
                             </li>
                         </ul>
                     </div>
                 <?php else: ?>
-                    <a href="/index.php?url=account/login" class="btn btn-outline-light btn-auth-nav text-white border-white-50">
+                    <a href="index.php?url=account/login" class="btn btn-outline-light btn-auth-nav text-white border-white-50">
                         <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
                     </a>
-                    <a href="/index.php?url=account/register" class="btn btn-warning btn-auth-nav text-dark border-0">
+                    <a href="index.php?url=account/register" class="btn btn-warning btn-auth-nav text-dark border-0">
                         Đăng ký
                     </a>
                 <?php endif; ?>

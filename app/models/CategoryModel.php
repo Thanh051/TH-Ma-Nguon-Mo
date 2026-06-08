@@ -10,42 +10,37 @@ class CategoryModel {
         $this->conn = $db->getConnection();
     }
 
-    // Lấy tất cả danh mục
     public function getAllCategories() {
-        $query = "SELECT * FROM " . $this->table . " ORDER BY id DESC";
-        $stmt = $this->conn->prepare($query);
+        $stmt = $this->conn->prepare("SELECT * FROM " . $this->table . " ORDER BY id DESC");
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll();
     }
 
-    // Lấy 1 danh mục theo ID
     public function getCategoryById($id) {
-        $query = "SELECT * FROM " . $this->table . " WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt = $this->conn->prepare("SELECT * FROM " . $this->table . " WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => (int)$id]);
+        return $stmt->fetch();
     }
 
-    // Thêm danh mục
-    public function create($name) {
-        $query = "INSERT INTO " . $this->table . " (name) VALUES (:name)";
-        $stmt = $this->conn->prepare($query);
-        return $stmt->execute([':name' => $name]);
+    public function create($name, $description = '') {
+        $stmt = $this->conn->prepare("INSERT INTO " . $this->table . " (name, description) VALUES (:name, :description)");
+        return $stmt->execute([':name' => $name, ':description' => $description]);
     }
 
-    // Sửa danh mục
-    public function update($id, $name) {
-        $query = "UPDATE " . $this->table . " SET name = :name WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-        return $stmt->execute([':id' => $id, ':name' => $name]);
+    public function update($id, $name, $description = '') {
+        $stmt = $this->conn->prepare("UPDATE " . $this->table . " SET name = :name, description = :description WHERE id = :id");
+        return $stmt->execute([':id' => (int)$id, ':name' => $name, ':description' => $description]);
     }
 
-    // Xóa danh mục
+    public function countProducts($id) {
+        $stmt = $this->conn->prepare("SELECT COUNT(*) AS total FROM products WHERE category_id = :id");
+        $stmt->execute([':id' => (int)$id]);
+        $row = $stmt->fetch();
+        return (int)($row['total'] ?? 0);
+    }
+
     public function delete($id) {
-        $query = "DELETE FROM " . $this->table . " WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
-        return $stmt->execute();
+        $stmt = $this->conn->prepare("DELETE FROM " . $this->table . " WHERE id = :id");
+        return $stmt->execute([':id' => (int)$id]);
     }
 }
