@@ -3,7 +3,6 @@ require_once 'app/config/database.php';
 
 class CategoryModel {
     private $conn;
-    private $table = "categories";
 
     public function __construct() {
         $db = new Database();
@@ -11,36 +10,34 @@ class CategoryModel {
     }
 
     public function getAllCategories() {
-        $stmt = $this->conn->prepare("SELECT * FROM " . $this->table . " ORDER BY id DESC");
-        $stmt->execute();
+        $stmt = $this->conn->query("SELECT * FROM categories ORDER BY id ASC");
         return $stmt->fetchAll();
     }
 
     public function getCategoryById($id) {
-        $stmt = $this->conn->prepare("SELECT * FROM " . $this->table . " WHERE id = :id LIMIT 1");
+        $stmt = $this->conn->prepare("SELECT * FROM categories WHERE id = :id LIMIT 1");
         $stmt->execute([':id' => (int)$id]);
-        return $stmt->fetch();
+        return $stmt->fetch() ?: null;
     }
 
-    public function create($name, $description = '') {
-        $stmt = $this->conn->prepare("INSERT INTO " . $this->table . " (name, description) VALUES (:name, :description)");
-        return $stmt->execute([':name' => $name, ':description' => $description]);
+    public function create($name) {
+        $stmt = $this->conn->prepare("INSERT INTO categories (name) VALUES (:name)");
+        return $stmt->execute([':name' => $name]);
     }
 
-    public function update($id, $name, $description = '') {
-        $stmt = $this->conn->prepare("UPDATE " . $this->table . " SET name = :name, description = :description WHERE id = :id");
-        return $stmt->execute([':id' => (int)$id, ':name' => $name, ':description' => $description]);
-    }
-
-    public function countProducts($id) {
-        $stmt = $this->conn->prepare("SELECT COUNT(*) AS total FROM products WHERE category_id = :id");
-        $stmt->execute([':id' => (int)$id]);
-        $row = $stmt->fetch();
-        return (int)($row['total'] ?? 0);
+    public function update($id, $name) {
+        $stmt = $this->conn->prepare("UPDATE categories SET name = :name WHERE id = :id");
+        return $stmt->execute([':name' => $name, ':id' => (int)$id]);
     }
 
     public function delete($id) {
-        $stmt = $this->conn->prepare("DELETE FROM " . $this->table . " WHERE id = :id");
+        $stmt = $this->conn->prepare("DELETE FROM categories WHERE id = :id");
         return $stmt->execute([':id' => (int)$id]);
+    }
+
+    public function countProducts($id) {
+        $stmt = $this->conn->prepare("SELECT COUNT(*) FROM products WHERE category_id = :id");
+        $stmt->execute([':id' => (int)$id]);
+        return (int)$stmt->fetchColumn();
     }
 }

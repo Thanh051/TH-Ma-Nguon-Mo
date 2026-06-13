@@ -13,21 +13,21 @@ class CategoryApiController extends BaseApiController {
     public function index() {
         if (!$this->requireMethod('GET')) return;
         $this->json([
-            'status' => true,
+            'status'  => true,
             'message' => 'Lấy danh sách danh mục thành công',
-            'data' => $this->categoryModel->getAllCategories()
+            'data'    => $this->categoryModel->getAllCategories()
         ]);
     }
 
     // GET /api/category/detail/{id}
     public function detail($id) {
         if (!$this->requireMethod('GET')) return;
-        $category = $this->categoryModel->getCategoryById($id);
-        if (!$category) {
+        $cat = $this->categoryModel->getCategoryById($id);
+        if (!$cat) {
             $this->json(['status' => false, 'message' => 'Danh mục không tồn tại'], 404);
             return;
         }
-        $this->json(['status' => true, 'data' => $category]);
+        $this->json(['status' => true, 'data' => $cat]);
     }
 
     // POST /api/category/create
@@ -35,17 +35,14 @@ class CategoryApiController extends BaseApiController {
         if (!$this->requireMethod('POST')) return;
         $data = $this->body();
         $name = trim($data['name'] ?? '');
-        $description = trim($data['description'] ?? '');
-
         if ($name === '') {
             $this->json(['status' => false, 'message' => 'Tên danh mục không được rỗng'], 400);
             return;
         }
-
-        $ok = $this->categoryModel->create($name, $description);
+        $ok = $this->categoryModel->create($name);
         $this->json([
-            'status' => $ok,
-            'message' => $ok ? 'Thêm danh mục bằng API thành công' : 'Không thể thêm danh mục'
+            'status'  => $ok,
+            'message' => $ok ? 'Thêm danh mục thành công' : 'Không thể thêm danh mục'
         ], $ok ? 201 : 500);
     }
 
@@ -56,20 +53,16 @@ class CategoryApiController extends BaseApiController {
             $this->json(['status' => false, 'message' => 'Danh mục không tồn tại'], 404);
             return;
         }
-
         $data = $this->body();
         $name = trim($data['name'] ?? '');
-        $description = trim($data['description'] ?? '');
-
         if ($name === '') {
             $this->json(['status' => false, 'message' => 'Tên danh mục không được rỗng'], 400);
             return;
         }
-
-        $ok = $this->categoryModel->update($id, $name, $description);
+        $ok = $this->categoryModel->update($id, $name);
         $this->json([
-            'status' => $ok,
-            'message' => $ok ? 'Cập nhật danh mục bằng API thành công' : 'Không thể cập nhật danh mục'
+            'status'  => $ok,
+            'message' => $ok ? 'Cập nhật danh mục thành công' : 'Không thể cập nhật danh mục'
         ]);
     }
 
@@ -80,16 +73,14 @@ class CategoryApiController extends BaseApiController {
             $this->json(['status' => false, 'message' => 'Danh mục không tồn tại'], 404);
             return;
         }
-
         if ($this->categoryModel->countProducts($id) > 0) {
-            $this->json(['status' => false, 'message' => 'Không thể xóa danh mục vì vẫn còn sản phẩm thuộc danh mục này'], 400);
+            $this->json(['status' => false, 'message' => 'Không thể xóa danh mục vì vẫn còn sản phẩm'], 400);
             return;
         }
-
         $ok = $this->categoryModel->delete($id);
         $this->json([
-            'status' => $ok,
-            'message' => $ok ? 'Xóa danh mục bằng API thành công' : 'Không thể xóa danh mục'
+            'status'  => $ok,
+            'message' => $ok ? 'Xóa danh mục thành công' : 'Không thể xóa danh mục'
         ]);
     }
 }

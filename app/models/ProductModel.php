@@ -3,117 +3,90 @@ require_once 'app/config/database.php';
 
 class ProductModel {
     private $conn;
-    private $table = "products";
 
     public function __construct() {
         $db = new Database();
         $this->conn = $db->getConnection();
     }
 
+    // Real schema: id, name, price, image, description, category_id (no stock)
     public function getAllProducts($filters = []) {
-        $where = [];
+        $sql    = "SELECT p.*, c.name AS category_name
+                   FROM products p
+                   LEFT JOIN categories c ON c.id = p.category_id
+                   WHERE 1=1";
         $params = [];
 
         if (!empty($filters['search'])) {
-            $where[] = "(p.name LIKE :search OR p.description LIKE :search)";
+            $sql .= " AND p.name LIKE :search";
             $params[':search'] = '%' . $filters['search'] . '%';
         }
-
-        if (!empty($filters['category_id'])) {
-            $where[] = "p.category_id = :category_id";
+        if (!empty($filters['category_id']) && is_numeric($filters['category_id'])) {
+            $sql .= " AND p.category_id = :category_id";
             $params[':category_id'] = (int)$filters['category_id'];
         }
-
-        if (isset($filters['min_price']) && $filters['min_price'] !== '') {
-            $where[] = "p.price >= :min_price";
-            $params[':min_price'] = (float)$filters['min_price'];
-        }
-
-        if (isset($filters['max_price']) && $filters['max_price'] !== '') {
-            $where[] = "p.price <= :max_price";
-            $params[':max_price'] = (float)$filters['max_price'];
-        }
-
-        $orderBy = "p.id DESC";
         if (!empty($filters['sort_price'])) {
-            $sort = strtolower($filters['sort_price']);
-            if ($sort === 'asc') {
-                $orderBy = "p.price ASC";
-            } elseif ($sort === 'desc') {
-                $orderBy = "p.price DESC";
-            }
+            $dir  = strtolower($filters['sort_price']) === 'asc' ? 'ASC' : 'DESC';
+            $sql .= " ORDER BY p.price $dir";
+        } else {
+            $sql .= " ORDER BY p.id DESC";
         }
 
-        $sql = "SELECT p.*, c.name AS category_name
-                FROM " . $this->table . " p
-                LEFT JOIN categories c ON p.category_id = c.id";
-
-        if (!empty($where)) {
-            $sql .= " WHERE " . implode(" AND ", $where);
-        }
-
-        $sql .= " ORDER BY " . $orderBy;
         $stmt = $this->conn->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
     }
 
     public function getProductById($id) {
-        $sql = "SELECT p.*, c.name AS category_name
-                FROM " . $this->table . " p
-                LEFT JOIN categories c ON p.category_id = c.id
-                WHERE p.id = :id LIMIT 1";
-        $stmt = $this->conn->prepare($sql);
+        $stmt = $this->conn->prepare(
+            "SELECT p.*, c.name AS category_name
+             FROM products p
+             LEFT JOIN categories c ON c.id = p.category_id
+             WHERE p.id = :id LIMIT 1"
+        );
         $stmt->execute([':id' => (int)$id]);
-        return $stmt->fetch();
+        return $stmt->fetch() ?: null;
     }
 
-    public function categoryExists($category_id) {
-        if ($category_id === null || $category_id === '' || (int)$category_id <= 0) {
-            return true;
-        }
+    public function categoryExists($categoryId) {
+        if (!$categoryId || !is_numeric($categoryId)) return false;
         $stmt = $this->conn->prepare("SELECT id FROM categories WHERE id = :id LIMIT 1");
-        $stmt->execute([':id' => (int)$category_id]);
+        $stmt->execute([':id' => (int)$categoryId]);
         return (bool)$stmt->fetch();
     }
 
-    public function create($name, $price, $image = null, $description = '', $category_id = null, $stock = 0) {
-        $sql = "INSERT INTO " . $this->table . " (name, description, price, stock, category_id, image)
-                VALUES (:name, :description, :price, :stock, :category_id, :image)";
-        $stmt = $this->conn->prepare($sql);
+    // Create: no stock column
+    public function create($name, $price, $image, $description, $categoryId) {
+        $stmt = $this->conn->prepare(
+            "INSERT INTO products (name, price, image, description, category_id)
+             VALUES (:name, :price, :image, :description, :category_id)"
+        );
         return $stmt->execute([
-            ':name' => $name,
+            ':name'        => $name,
+            ':price'       => (float)$price,
+            ':image'       => $image ?: null,
             ':description' => $description,
-            ':price' => (float)$price,
-            ':stock' => (int)$stock,
-            ':category_id' => $category_id ? (int)$category_id : null,
-            ':image' => $image ?: null
+            ':category_id' => (int)$categoryId
         ]);
     }
 
-    public function update($id, $name, $price, $image = null, $description = '', $category_id = null, $stock = 0) {
-        $sql = "UPDATE " . $this->table . "
-                SET name = :name,
-                    description = :description,
-                    price = :price,
-                    stock = :stock,
-                    category_id = :category_id,
-                    image = :image
-                WHERE id = :id";
-        $stmt = $this->conn->prepare($sql);
+    public function update($id, $name, $price, $image, $description, $categoryId) {
+        $stmt = $this->conn->prepare(
+            "UPDATE products SET name = :name, price = :price, image = :image,
+             description = :description, category_id = :category_id WHERE id = :id"
+        );
         return $stmt->execute([
-            ':id' => (int)$id,
-            ':name' => $name,
+            ':name'        => $name,
+            ':price'       => (float)$price,
+            ':image'       => $image ?: null,
             ':description' => $description,
-            ':price' => (float)$price,
-            ':stock' => (int)$stock,
-            ':category_id' => $category_id ? (int)$category_id : null,
-            ':image' => $image ?: null
+            ':category_id' => (int)$categoryId,
+            ':id'          => (int)$id
         ]);
     }
 
     public function delete($id) {
-        $stmt = $this->conn->prepare("DELETE FROM " . $this->table . " WHERE id = :id");
+        $stmt = $this->conn->prepare("DELETE FROM products WHERE id = :id");
         return $stmt->execute([':id' => (int)$id]);
     }
 }

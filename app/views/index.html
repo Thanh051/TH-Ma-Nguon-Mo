@@ -3,574 +3,1176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebStore - Giao diện gọi Web API</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>TTG Store – Cửa Hàng Công Nghệ</title>
+    <meta name="description" content="TTG Store – Mua sắm điện thoại, laptop, tablet và phụ kiện công nghệ.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body { background: #f5f7fb; }
-        .card { border: 0; box-shadow: 0 10px 25px rgba(15, 23, 42, .08); }
-        .product-img { height: 140px; object-fit: contain; background: #fff; }
-        .section-title { font-weight: 800; }
-        pre { max-height: 260px; overflow: auto; }
-        .badge-api { font-size: .72rem; }
+        :root{--primary:#7c3aed;--primary-light:#a855f7;--primary-dark:#5b21b6;--accent:#06b6d4;--accent-dark:#0891b2;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--bg:#0f0f17;--bg2:#161622;--bg3:#1e1e2e;--gb:rgba(30,30,46,.85);--gbr:rgba(124,58,237,.25);--text:#e2e8f0;--text-muted:#94a3b8;--text-dim:#64748b;--shadow:0 8px 32px rgba(0,0,0,.4);--glow:0 0 30px rgba(124,58,237,.3)}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+        body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 20% 20%,rgba(124,58,237,.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(6,182,212,.06) 0%,transparent 50%);pointer-events:none;z-index:0}
+
+        /* ── NAVBAR ── */
+        .navbar{position:sticky;top:0;z-index:1000;background:rgba(15,15,23,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--gbr);padding:0 1.5rem;height:64px;display:flex;align-items:center;justify-content:space-between}
+        .brand{font-size:1.4rem;font-weight:800;background:linear-gradient(135deg,var(--primary-light),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;cursor:pointer}
+        .nav-links{display:flex;align-items:center;gap:.25rem;list-style:none}
+        .nav-links a{color:var(--text-muted);text-decoration:none;padding:.5rem .9rem;border-radius:8px;font-size:.9rem;font-weight:500;transition:all .2s;display:flex;align-items:center;gap:.4rem;cursor:pointer}
+        .nav-links a:hover,.nav-links a.active{color:var(--primary-light);background:rgba(124,58,237,.15)}
+        .navbar-right{display:flex;align-items:center;gap:.75rem}
+        .cart-btn{position:relative;background:rgba(124,58,237,.2);border:1px solid var(--gbr);color:var(--primary-light);padding:.5rem 1rem;border-radius:10px;cursor:pointer;font-family:inherit;font-size:.9rem;font-weight:600;display:flex;align-items:center;gap:.5rem;transition:all .2s}
+        .cart-btn:hover{background:rgba(124,58,237,.35)}
+        .cart-badge{position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;font-size:.7rem;font-weight:700;width:18px;height:18px;border-radius:50%;display:none;align-items:center;justify-content:center}
+        .btn-login{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border:none;padding:.5rem 1.2rem;border-radius:10px;font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:.4rem}
+        .btn-login:hover{box-shadow:var(--glow);transform:translateY(-1px)}
+        .user-btn{display:flex;align-items:center;gap:.5rem;color:var(--text);font-size:.9rem;font-weight:500;cursor:pointer}
+        .user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:#fff}
+
+        /* ── PAGES ── */
+        .page{display:none;min-height:calc(100vh - 64px);padding:2rem 1.5rem;position:relative;z-index:1;max-width:1400px;margin:0 auto}
+        .page.active{display:block}
+
+        /* ── SLIDER ── */
+        .slider-wrap{position:relative;border-radius:20px;overflow:hidden;margin-bottom:2rem;height:300px;background:var(--bg3)}
+        .slider-track{display:flex;height:100%;transition:transform .6s cubic-bezier(.25,.46,.45,.94)}
+        .slide{min-width:100%;height:100%;position:relative;display:flex;align-items:center;padding:2.5rem 3rem;overflow:hidden}
+        .slide-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(.3)}
+        .slide-content{position:relative;z-index:2;max-width:520px}
+        .slide-tag{display:inline-flex;align-items:center;gap:.4rem;background:rgba(124,58,237,.35);border:1px solid rgba(168,85,247,.5);color:var(--primary-light);padding:.3rem .85rem;border-radius:50px;font-size:.78rem;font-weight:600;margin-bottom:.85rem;backdrop-filter:blur(8px)}
+        .slide-title{font-size:2rem;font-weight:900;line-height:1.2;margin-bottom:.6rem;color:#fff}
+        .slide-title span{background:linear-gradient(135deg,var(--primary-light),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .slide-desc{color:rgba(255,255,255,.75);font-size:.95rem;margin-bottom:1.25rem;line-height:1.5}
+        .slide-cta{display:inline-flex;align-items:center;gap:.5rem;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border:none;padding:.65rem 1.5rem;border-radius:10px;font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s}
+        .slide-cta:hover{box-shadow:var(--glow);transform:translateY(-1px)}
+        .slider-dots{position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);display:flex;gap:.5rem;z-index:10}
+        .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer;transition:all .3s}
+        .dot.active{width:24px;border-radius:4px;background:var(--primary-light)}
+        .slider-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:10;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.15);color:#fff;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;backdrop-filter:blur(4px)}
+        .slider-arrow:hover{background:rgba(124,58,237,.5)}
+        .slider-arrow.prev{left:1rem}
+        .slider-arrow.next{right:1rem}
+
+        /* ── FILTER ── */
+        .category-chips{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.25rem}
+        .chip{background:rgba(30,30,46,.8);border:1px solid rgba(100,116,139,.25);color:var(--text-muted);padding:.4rem 1rem;border-radius:50px;font-size:.85rem;font-weight:500;cursor:pointer;transition:all .2s}
+        .chip:hover,.chip.active{background:rgba(124,58,237,.25);border-color:var(--primary);color:var(--primary-light)}
+        .filter-bar{background:rgba(30,30,46,.85);backdrop-filter:blur(12px);border:1px solid var(--gbr);border-radius:16px;padding:1.1rem 1.5rem;margin-bottom:2rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
+        .filter-bar input,.filter-bar select{background:rgba(15,15,23,.8);border:1px solid rgba(100,116,139,.3);color:var(--text);padding:.6rem 1rem;border-radius:10px;font-family:inherit;font-size:.9rem;outline:none;transition:border-color .2s}
+        .filter-bar input:focus,.filter-bar select:focus{border-color:var(--primary)}
+        .filter-bar input{flex:1;min-width:200px}
+        .filter-bar select{min-width:160px}
+        .filter-bar select option{background:var(--bg2)}
+
+        /* ── PRODUCT GRID ── */
+        .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.25rem}
+        .product-card{background:var(--bg3);border:1px solid rgba(100,116,139,.15);border-radius:16px;overflow:hidden;transition:all .3s;cursor:pointer}
+        .product-card:hover{border-color:var(--primary);transform:translateY(-4px);box-shadow:var(--shadow),var(--glow)}
+        .product-img{width:100%;height:200px;background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.08));display:flex;align-items:center;justify-content:center;font-size:4rem;color:rgba(124,58,237,.3);overflow:hidden}
+        .product-img img{width:100%;height:100%;object-fit:cover}
+        .product-info{padding:1.1rem}
+        .product-cat{font-size:.75rem;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem}
+        .product-name{font-size:1rem;font-weight:700;margin-bottom:.75rem;line-height:1.3}
+        .product-price{font-size:1.25rem;font-weight:800;background:linear-gradient(135deg,#f59e0b,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:1rem}
+        .btn-add-cart{width:100%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border:none;padding:.65rem;border-radius:10px;font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;transition:all .2s}
+        .btn-add-cart:hover{box-shadow:var(--glow);transform:translateY(-1px)}
+
+        /* ── CART ── */
+        .cart-layout{display:grid;grid-template-columns:1fr 360px;gap:1.5rem}
+        @media(max-width:900px){.cart-layout{grid-template-columns:1fr}}
+        .cart-item{background:var(--bg3);border:1px solid rgba(100,116,139,.15);border-radius:14px;padding:1.25rem;display:flex;gap:1rem;align-items:center;margin-bottom:.75rem;transition:border-color .2s}
+        .cart-item:hover{border-color:var(--primary)}
+        .cart-item-img{width:72px;height:72px;border-radius:10px;background:rgba(124,58,237,.1);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0;overflow:hidden}
+        .cart-item-img img{width:100%;height:100%;object-fit:cover}
+        .cart-item-info{flex:1}
+        .cart-item-name{font-weight:700;margin-bottom:.25rem}
+        .cart-item-price{color:var(--warning);font-weight:600;font-size:.95rem}
+        .qty-ctrl{display:flex;align-items:center;gap:.5rem;margin-top:.5rem}
+        .qty-btn{background:rgba(124,58,237,.2);border:1px solid var(--gbr);color:var(--primary-light);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:background .2s}
+        .qty-btn:hover{background:rgba(124,58,237,.4)}
+        .qty-val{font-weight:700;min-width:28px;text-align:center}
+        .cart-summary{background:var(--bg3);border:1px solid var(--gbr);border-radius:16px;padding:1.5rem;position:sticky;top:80px;height:fit-content}
+        .summary-row{display:flex;justify-content:space-between;margin-bottom:.75rem;color:var(--text-muted);font-size:.9rem}
+        .summary-total{display:flex;justify-content:space-between;font-size:1.2rem;font-weight:800;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--gbr)}
+        .summary-total span:last-child{background:linear-gradient(135deg,#f59e0b,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+        /* ── PANELS ── */
+        .panel{background:var(--bg3);border:1px solid rgba(100,116,139,.15);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem}
+        .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid var(--gbr)}
+        .panel-title{font-size:1.05rem;font-weight:700}
+
+        /* ── FORMS ── */
+        .form-group{margin-bottom:1.1rem}
+        .form-label{display:block;font-size:.85rem;font-weight:600;color:var(--text-muted);margin-bottom:.4rem}
+        .form-control{width:100%;background:rgba(15,15,23,.8);border:1px solid rgba(100,116,139,.3);color:var(--text);padding:.7rem 1rem;border-radius:10px;font-family:inherit;font-size:.95rem;outline:none;transition:all .2s}
+        .form-control:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(124,58,237,.15)}
+        .form-control::placeholder{color:var(--text-dim)}
+        .form-control option{background:var(--bg2)}
+        textarea.form-control{resize:vertical;min-height:80px}
+
+        /* ── IMAGE UPLOAD ── */
+        .upload-area{border:2px dashed rgba(100,116,139,.35);border-radius:12px;padding:1.5rem;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:rgba(15,15,23,.5)}
+        .upload-area:hover,.upload-area.drag-over{border-color:var(--primary);background:rgba(124,58,237,.08)}
+        .upload-area input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+        .upload-area i{font-size:2rem;color:var(--text-dim);margin-bottom:.5rem;display:block}
+        .upload-area p{color:var(--text-muted);font-size:.85rem}
+        .upload-preview{width:100%;height:130px;object-fit:cover;border-radius:10px;margin-top:.75rem;display:none;border:1px solid var(--gbr)}
+
+        /* ── BUTTONS ── */
+        .btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;padding:.65rem 1.4rem;border-radius:10px;font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;text-decoration:none}
+        .btn:hover{transform:translateY(-1px)}
+        .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff}
+        .btn-primary:hover{box-shadow:var(--glow)}
+        .btn-accent{background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff}
+        .btn-success{background:linear-gradient(135deg,var(--success),#059669);color:#fff}
+        .btn-danger{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#ef4444}
+        .btn-danger:hover{background:rgba(239,68,68,.25)}
+        .btn-ghost{background:rgba(100,116,139,.1);border:1px solid rgba(100,116,139,.2);color:var(--text-muted)}
+        .btn-ghost:hover{background:rgba(100,116,139,.2);color:var(--text)}
+        .btn-sm{padding:.4rem .85rem;font-size:.82rem;border-radius:8px}
+        .btn-full{width:100%}
+
+        /* ── TABLE ── */
+        .table-wrap{overflow-x:auto;border-radius:12px}
+        table{width:100%;border-collapse:collapse}
+        thead th{background:rgba(124,58,237,.1);color:var(--text-muted);font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:.85rem 1rem;text-align:left}
+        tbody tr{border-bottom:1px solid rgba(100,116,139,.1);transition:background .15s}
+        tbody tr:hover{background:rgba(124,58,237,.05)}
+        tbody td{padding:.9rem 1rem;font-size:.9rem}
+
+        /* ── BADGES ── */
+        .badge{display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .65rem;border-radius:50px;font-size:.75rem;font-weight:600}
+        .badge-purple{background:rgba(124,58,237,.2);color:var(--primary-light)}
+        .badge-cyan{background:rgba(6,182,212,.15);color:var(--accent)}
+        .badge-green{background:rgba(16,185,129,.15);color:var(--success)}
+        .badge-yellow{background:rgba(245,158,11,.15);color:var(--warning)}
+        .badge-red{background:rgba(239,68,68,.15);color:var(--danger)}
+
+        /* ── AUTH ── */
+        .auth-center{max-width:420px;margin:3rem auto}
+        .auth-panel{background:var(--bg3);border:1px solid var(--gbr);border-radius:20px;padding:2.5rem}
+        .auth-logo{text-align:center;margin-bottom:2rem}
+        .auth-logo span{font-size:2rem;font-weight:900;background:linear-gradient(135deg,var(--primary-light),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .auth-logo p{color:var(--text-muted);font-size:.9rem;margin-top:.35rem}
+        .auth-tabs{display:flex;gap:.5rem;background:rgba(15,15,23,.6);border-radius:10px;padding:.3rem;margin-bottom:1.75rem}
+        .auth-tab{flex:1;text-align:center;padding:.55rem;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;color:var(--text-muted);transition:all .2s}
+        .auth-tab.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff}
+
+        /* ── ADMIN ── */
+        .admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+        @media(max-width:1024px){.admin-grid{grid-template-columns:1fr}}
+        .stat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem}
+        @media(max-width:900px){.stat-cards{grid-template-columns:repeat(2,1fr)}}
+        .stat-card{background:var(--bg3);border:1px solid rgba(100,116,139,.15);border-radius:14px;padding:1.25rem;display:flex;align-items:center;gap:1rem}
+        .stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+        .stat-label{font-size:.78rem;color:var(--text-muted);font-weight:500}
+        .stat-value{font-size:1.5rem;font-weight:800}
+
+        /* ── MODAL ── */
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:9000;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .25s}
+        .modal-overlay.open{opacity:1;pointer-events:all}
+        .modal{background:var(--bg2);border:1px solid var(--gbr);border-radius:20px;padding:2rem;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;transform:scale(.95);transition:transform .25s}
+        .modal-overlay.open .modal{transform:scale(1)}
+        .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+        .modal-title{font-size:1.15rem;font-weight:700}
+        .modal-close{background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer}
+        .modal-close:hover{color:var(--text)}
+
+        /* ── CHECKOUT METHODS ── */
+        .checkout-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1rem}
+        .method-card{background:rgba(15,15,23,.6);border:2px solid rgba(100,116,139,.2);border-radius:12px;padding:.9rem;text-align:center;cursor:pointer;transition:all .2s}
+        .method-card.selected{border-color:var(--primary);background:rgba(124,58,237,.1)}
+        .method-card i{font-size:1.4rem;margin-bottom:.4rem;display:block;color:var(--text-muted)}
+        .method-card.selected i{color:var(--primary-light)}
+        .method-card span{font-size:.78rem;font-weight:600;color:var(--text-muted)}
+        .method-card.selected span{color:var(--primary-light)}
+
+        /* ── TOAST ── */
+        .toast-container{position:fixed;bottom:1.5rem;right:1.5rem;z-index:99999;display:flex;flex-direction:column;gap:.5rem}
+        .toast{background:var(--bg2);border:1px solid var(--gbr);border-radius:12px;padding:.85rem 1.25rem;display:flex;align-items:center;gap:.75rem;font-size:.9rem;font-weight:500;min-width:260px;max-width:380px;box-shadow:var(--shadow);animation:slideIn .3s ease}
+        .toast.success{border-color:rgba(16,185,129,.4)}.toast.error{border-color:rgba(239,68,68,.4)}.toast.info{border-color:rgba(6,182,212,.4)}
+        .toast.success i{color:var(--success)}.toast.error i{color:var(--danger)}.toast.info i{color:var(--accent)}
+        @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+        /* ── MISC ── */
+        .empty-state{text-align:center;padding:4rem 2rem;color:var(--text-muted)}
+        .empty-state i{font-size:3.5rem;margin-bottom:1rem;opacity:.3;display:block}
+        .spinner{width:40px;height:40px;border:3px solid rgba(124,58,237,.2);border-top-color:var(--primary-light);border-radius:50%;animation:spin .8s linear infinite;margin:2rem auto}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .divider{border:none;border-top:1px solid var(--gbr);margin:1.25rem 0}
+        .text-muted{color:var(--text-muted)}
+        .text-gradient{background:linear-gradient(135deg,var(--primary-light),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .page-header{margin-bottom:2rem}
+        .page-header h1{font-size:1.8rem;font-weight:800;margin-bottom:.35rem}
+        .page-header p{color:var(--text-muted);font-size:.95rem}
+        .prod-detail-img{width:100%;height:240px;border-radius:14px;background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.08));display:flex;align-items:center;justify-content:center;font-size:5rem;color:rgba(124,58,237,.2);margin-bottom:1.25rem;overflow:hidden}
+        .prod-detail-img img{width:100%;height:100%;object-fit:cover}
+        ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--primary-dark);border-radius:3px}
+        @media(max-width:768px){.nav-links{display:none}.admin-grid{grid-template-columns:1fr}.stat-cards{grid-template-columns:repeat(2,1fr)}.slider-wrap{height:220px}.slide-title{font-size:1.4rem}}
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg bg-dark navbar-dark sticky-top">
-    <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="#">WebStore API</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item"><a class="nav-link" href="#products">Sản phẩm</a></li>
-                <li class="nav-item"><a class="nav-link" href="#categories">Danh mục</a></li>
-                <li class="nav-item"><a class="nav-link" href="#cart">Giỏ hàng</a></li>
-                <li class="nav-item"><a class="nav-link" href="#orders">Đơn hàng</a></li>
-                <li class="nav-item"><a class="nav-link" href="#account">Tài khoản</a></li>
-            </ul>
-            <span id="loginInfo" class="navbar-text small">Chưa đăng nhập</span>
-        </div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+    <span class="brand" onclick="navigate('home')"><i class="fas fa-bolt"></i> TTG Store</span>
+    <ul class="nav-links">
+        <li><a id="nav-home" onclick="navigate('home')" class="active"><i class="fas fa-home"></i> Trang Chủ</a></li>
+        <li><a id="nav-orders" onclick="navigate('orders')"><i class="fas fa-box"></i> Đơn Hàng</a></li>
+        <li id="nav-admin-li" style="display:none"><a id="nav-admin" onclick="navigate('admin')"><i class="fas fa-shield-alt"></i> Quản Trị</a></li>
+    </ul>
+    <div class="navbar-right">
+        <span class="cart-btn" onclick="navigate('cart')">
+            <i class="fas fa-shopping-cart"></i>
+            <span id="cart-count-text">Giỏ</span>
+            <span class="cart-badge" id="cart-badge"></span>
+        </span>
+        <div id="auth-area"></div>
     </div>
 </nav>
 
-<main class="container py-4">
-    <div class="alert alert-info">
-        Trang này không xử lý thêm/sửa/xóa bằng form PHP truyền thống. Tất cả form đều bị chặn reload bằng <b>event.preventDefault()</b> và gửi dữ liệu đến <b>/api/...</b> bằng <b>fetch()</b>.
+<div class="toast-container" id="toast-container"></div>
+
+<!-- HOME -->
+<div id="page-home" class="page active">
+    <!-- SLIDER -->
+    <div class="slider-wrap" id="slider-wrap">
+        <div class="slider-track" id="slider-track">
+            <!-- Slides injected by JS -->
+        </div>
+        <button class="slider-arrow prev" onclick="slideMove(-1)"><i class="fas fa-chevron-left"></i></button>
+        <button class="slider-arrow next" onclick="slideMove(1)"><i class="fas fa-chevron-right"></i></button>
+        <div class="slider-dots" id="slider-dots"></div>
     </div>
 
-    <section id="products" class="mb-5">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="section-title mb-0">Sản phẩm <span class="badge bg-primary badge-api">GET /api/product</span></h2>
-            <button class="btn btn-outline-secondary btn-sm" onclick="loadProducts()">Tải lại</button>
+    <!-- Category chips -->
+    <div class="category-chips" id="category-chips">
+        <div class="chip active" onclick="filterCategory(null,this)"><i class="fas fa-th"></i> Tất Cả</div>
+    </div>
+    <!-- Filter bar -->
+    <div class="filter-bar">
+        <input type="text" id="search-input" placeholder="🔍 Tìm kiếm sản phẩm...">
+        <select id="sort-select">
+            <option value="">Sắp xếp giá</option>
+            <option value="asc">Giá tăng dần ↑</option>
+            <option value="desc">Giá giảm dần ↓</option>
+        </select>
+        <button class="btn btn-primary" onclick="loadProducts()"><i class="fas fa-filter"></i> Lọc</button>
+    </div>
+    <div class="product-grid" id="product-grid"><div class="spinner"></div></div>
+</div>
+
+<!-- CART -->
+<div id="page-cart" class="page">
+    <div class="page-header">
+        <h1><i class="fas fa-shopping-cart text-gradient"></i> Giỏ Hàng</h1>
+        <p>Xem lại sản phẩm trước khi thanh toán</p>
+    </div>
+    <div id="cart-login-notice" style="display:none">
+        <div class="empty-state">
+            <i class="fas fa-lock"></i>
+            <p>Vui lòng <a onclick="navigate('auth')" style="color:var(--primary-light);cursor:pointer;font-weight:700">đăng nhập</a> để xem giỏ hàng</p>
         </div>
-
-        <div class="card mb-3">
-            <div class="card-body">
-                <form id="filterForm" class="row g-2 align-items-end">
-                    <div class="col-md-3">
-                        <label class="form-label">Tìm kiếm</label>
-                        <input id="searchInput" class="form-control" placeholder="Tên sản phẩm...">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Lọc danh mục</label>
-                        <select id="filterCategory" class="form-select"><option value="">Tất cả</option></select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Sắp xếp giá</label>
-                        <select id="sortPrice" class="form-select">
-                            <option value="">Mặc định</option>
-                            <option value="asc">Tăng dần</option>
-                            <option value="desc">Giảm dần</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-primary w-100">Lọc bằng API</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div class="row g-3" id="productList"></div>
-    </section>
-
-    <section class="mb-5">
-        <h2 class="section-title">Thêm / sửa sản phẩm <span class="badge bg-success badge-api">POST, PUT /api/product</span></h2>
-        <div class="card">
-            <div class="card-body">
-                <form id="productForm" class="row g-3">
-                    <input type="hidden" id="productId">
-                    <div class="col-md-4">
-                        <label class="form-label">Tên sản phẩm</label>
-                        <input id="productName" class="form-control" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Giá</label>
-                        <input id="productPrice" type="number" min="1" class="form-control" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Tồn kho</label>
-                        <input id="productStock" type="number" min="0" value="0" class="form-control">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Danh mục</label>
-                        <select id="productCategory" class="form-select"></select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Ảnh / tên file ảnh</label>
-                        <input id="productImage" class="form-control" placeholder="vd: iphone.jpg hoặc public/images/iphone.jpg">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Mô tả</label>
-                        <input id="productDescription" class="form-control" placeholder="Mô tả ngắn">
-                    </div>
-                    <div class="col-12 d-flex gap-2">
-                        <button class="btn btn-success" id="saveProductBtn">Thêm bằng API</button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="resetProductForm()">Hủy sửa</button>
-                    </div>
-                </form>
+    </div>
+    <div id="cart-main" style="display:none">
+        <div class="cart-layout">
+            <div id="cart-items-list"></div>
+            <div class="cart-summary">
+                <h3><i class="fas fa-receipt"></i> Tóm Tắt</h3>
+                <div id="cart-summary-body"><p class="text-muted" style="font-size:.9rem">Giỏ hàng trống</p></div>
+                <hr class="divider">
+                <div class="summary-total"><span>Tổng cộng</span><span id="cart-total-display">0 ₫</span></div>
+                <button class="btn btn-primary btn-full" style="margin-top:1.25rem" onclick="openCheckout()"><i class="fas fa-credit-card"></i> Thanh Toán</button>
+                <button class="btn btn-ghost btn-full" style="margin-top:.5rem" onclick="clearCart()"><i class="fas fa-trash"></i> Xóa Giỏ Hàng</button>
             </div>
         </div>
-    </section>
+    </div>
+</div>
 
-    <section id="categories" class="mb-5">
-        <h2 class="section-title">Danh mục <span class="badge bg-warning text-dark badge-api">GET, POST, PUT, DELETE /api/category</span></h2>
-        <div class="row g-3">
-            <div class="col-lg-5">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <form id="categoryForm" class="row g-3">
-                            <input type="hidden" id="categoryId">
-                            <div class="col-12">
-                                <label class="form-label">Tên danh mục</label>
-                                <input id="categoryName" class="form-control" required>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Mô tả</label>
-                                <textarea id="categoryDescription" class="form-control" rows="3"></textarea>
-                            </div>
-                            <div class="col-12 d-flex gap-2">
-                                <button class="btn btn-warning" id="saveCategoryBtn">Thêm danh mục bằng API</button>
-                                <button type="button" class="btn btn-outline-secondary" onclick="resetCategoryForm()">Hủy sửa</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+<!-- ORDERS -->
+<div id="page-orders" class="page">
+    <div class="page-header">
+        <h1><i class="fas fa-box text-gradient"></i> Đơn Hàng</h1>
+        <p>Danh sách các đơn hàng đã đặt</p>
+    </div>
+    <div id="orders-list"><div class="spinner"></div></div>
+</div>
+
+<!-- AUTH -->
+<div id="page-auth" class="page">
+    <div class="auth-center">
+        <div class="auth-panel">
+            <div class="auth-logo">
+                <span><i class="fas fa-bolt"></i> TTG Store</span>
+                <p>Đăng nhập để mua sắm và theo dõi đơn hàng</p>
             </div>
-            <div class="col-lg-7">
-                <div class="card h-100">
-                    <div class="card-body table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead><tr><th>ID</th><th>Tên</th><th>Mô tả</th><th class="text-end">Thao tác</th></tr></thead>
-                            <tbody id="categoryTable"></tbody>
-                        </table>
-                    </div>
-                </div>
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="tab-login" onclick="switchTab('login')">Đăng Nhập</div>
+                <div class="auth-tab" id="tab-register" onclick="switchTab('register')">Đăng Ký</div>
+            </div>
+            <div id="form-login">
+                <div class="form-group"><label class="form-label">Tài khoản / Email</label><input type="text" id="login-username" class="form-control" placeholder="Nhập tài khoản..."></div>
+                <div class="form-group"><label class="form-label">Mật khẩu</label><input type="password" id="login-password" class="form-control" placeholder="Nhập mật khẩu..."></div>
+                <button class="btn btn-primary btn-full" onclick="doLogin()" style="margin-top:.5rem"><i class="fas fa-sign-in-alt"></i> Đăng Nhập</button>
+                <p style="margin-top:1rem;font-size:.82rem;color:var(--text-dim);text-align:center">Demo: <strong>admin@gmail.com / 123456</strong></p>
+            </div>
+            <div id="form-register" style="display:none">
+                <div class="form-group"><label class="form-label">Tên tài khoản</label><input type="text" id="reg-username" class="form-control" placeholder="Nhập tên tài khoản..."></div>
+                <div class="form-group"><label class="form-label">Email</label><input type="email" id="reg-email" class="form-control" placeholder="Nhập email..."></div>
+                <div class="form-group"><label class="form-label">Mật khẩu (≥ 6 ký tự)</label><input type="password" id="reg-password" class="form-control" placeholder="Nhập mật khẩu..."></div>
+                <button class="btn btn-success btn-full" onclick="doRegister()" style="margin-top:.5rem"><i class="fas fa-user-plus"></i> Tạo Tài Khoản</button>
             </div>
         </div>
-    </section>
+    </div>
+</div>
 
-    <section id="cart" class="mb-5">
-        <h2 class="section-title">Giỏ hàng <span class="badge bg-info text-dark badge-api">GET, POST, PUT, DELETE /api/cart</span></h2>
-        <div class="card">
-            <div class="card-body">
-                <div id="cartBox" class="table-responsive"></div>
-                <button class="btn btn-outline-danger btn-sm mt-2" onclick="clearCart()">Xóa toàn bộ giỏ hàng bằng API</button>
-            </div>
-        </div>
-    </section>
+<!-- ADMIN -->
+<div id="page-admin" class="page">
+    <div class="page-header">
+        <h1><i class="fas fa-shield-alt text-gradient"></i> Bảng Điều Khiển Admin</h1>
+        <p>Quản lý sản phẩm, danh mục và đơn hàng</p>
+    </div>
+    <div class="stat-cards">
+        <div class="stat-card"><div class="stat-icon" style="background:rgba(124,58,237,.15)"><i class="fas fa-box" style="color:var(--primary-light)"></i></div><div><div class="stat-label">Sản phẩm</div><div class="stat-value" id="stat-products">–</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:rgba(6,182,212,.12)"><i class="fas fa-tags" style="color:var(--accent)"></i></div><div><div class="stat-label">Danh mục</div><div class="stat-value" id="stat-categories">–</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:rgba(16,185,129,.12)"><i class="fas fa-receipt" style="color:var(--success)"></i></div><div><div class="stat-label">Đơn hàng</div><div class="stat-value" id="stat-orders">–</div></div></div>
+    </div>
+    <div class="auth-tabs" style="max-width:420px;margin-bottom:1.5rem" id="admin-tabs">
+        <div class="auth-tab active" onclick="adminTab('products')">Sản Phẩm</div>
+        <div class="auth-tab" onclick="adminTab('categories')">Danh Mục</div>
+        <div class="auth-tab" onclick="adminTab('all-orders')">Đơn Hàng</div>
+    </div>
 
-    <section id="orders" class="mb-5">
-        <h2 class="section-title">Đặt hàng / đơn hàng <span class="badge bg-secondary badge-api">POST, GET, DELETE /api/order</span></h2>
-        <div class="row g-3">
-            <div class="col-lg-5">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <form id="checkoutForm" class="row g-3">
-                            <div class="col-12">
-                                <label class="form-label">Tên khách hàng</label>
-                                <input id="customerName" class="form-control" required>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Số điện thoại</label>
-                                <input id="customerPhone" class="form-control" required>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Địa chỉ</label>
-                                <textarea id="customerAddress" class="form-control" rows="3" required></textarea>
-                            </div>
-                            <div class="col-12">
-                                <button class="btn btn-dark w-100">Tạo đơn hàng từ giỏ hàng bằng API</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-7">
-                <div class="card h-100">
-                    <div class="card-body table-responsive">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <b>Danh sách đơn hàng</b>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="loadOrders()">Tải đơn hàng</button>
+    <!-- Admin: Products -->
+    <div id="admin-products" class="admin-section">
+        <div class="admin-grid">
+            <div>
+                <div class="panel">
+                    <div class="panel-header"><span class="panel-title" id="prod-form-title"><i class="fas fa-plus-circle"></i> Thêm Sản Phẩm</span></div>
+                    <div class="form-group"><label class="form-label">Tên sản phẩm *</label><input type="text" id="prod-name" class="form-control" placeholder="Samsung Galaxy S25..."></div>
+                    <div class="form-group"><label class="form-label">Giá bán (VNĐ) *</label><input type="number" id="prod-price" class="form-control" placeholder="25990000"></div>
+                    <div class="form-group"><label class="form-label">Mô tả</label><textarea id="prod-desc" class="form-control" rows="3" placeholder="Mô tả sản phẩm..."></textarea></div>
+                    <div class="form-group"><label class="form-label">Danh mục *</label><select id="prod-cate" class="form-control"><option value="">-- Chọn danh mục --</option></select></div>
+                    <!-- Image upload -->
+                    <div class="form-group">
+                        <label class="form-label">Ảnh sản phẩm</label>
+                        <div class="upload-area" id="upload-area" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event)">
+                            <input type="file" id="prod-img-file" accept="image/*" onchange="handleFileSelect(this)">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Kéo thả hoặc <strong style="color:var(--primary-light)">chọn ảnh</strong> từ máy</p>
+                            <p style="font-size:.78rem;color:var(--text-dim);margin-top:.25rem">JPG, PNG, GIF, WEBP – tối đa 5MB</p>
                         </div>
-                        <table class="table table-hover align-middle">
-                            <thead><tr><th>ID</th><th>Khách</th><th>Tổng</th><th>Trạng thái</th><th></th></tr></thead>
-                            <tbody id="orderTable"></tbody>
-                        </table>
+                        <img id="upload-preview" class="upload-preview" alt="Preview">
+                        <div id="upload-status" style="font-size:.82rem;margin-top:.5rem;color:var(--text-muted)"></div>
+                        <input type="hidden" id="prod-image" value="">
+                    </div>
+                    <input type="hidden" id="prod-edit-id" value="">
+                    <div style="display:flex;gap:.75rem">
+                        <button class="btn btn-primary" style="flex:1" onclick="submitProduct()"><i class="fas fa-save"></i> <span id="prod-btn-text">Thêm Sản Phẩm</span></button>
+                        <button class="btn btn-ghost" id="prod-cancel-btn" style="display:none" onclick="cancelEditProduct()">Hủy</button>
                     </div>
                 </div>
             </div>
+            <div>
+                <div class="panel">
+                    <div class="panel-header"><span class="panel-title"><i class="fas fa-list"></i> Danh Sách Sản Phẩm</span><button class="btn btn-ghost btn-sm" onclick="loadAdminProducts()"><i class="fas fa-sync"></i></button></div>
+                    <div class="table-wrap"><table><thead><tr><th>ID</th><th>Ảnh</th><th>Tên</th><th>Giá</th><th></th></tr></thead><tbody id="admin-products-tbody"></tbody></table></div>
+                </div>
+            </div>
         </div>
-    </section>
+    </div>
 
-    <section id="account" class="mb-5">
-        <h2 class="section-title">Tài khoản <span class="badge bg-danger badge-api">POST, GET, PUT /api/account</span></h2>
-        <div class="row g-3">
-            <div class="col-lg-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5>Đăng nhập API</h5>
-                        <form id="loginForm" class="row g-2">
-                            <div class="col-12"><input id="loginUsername" class="form-control" placeholder="username hoặc email" required></div>
-                            <div class="col-12"><input id="loginPassword" type="password" class="form-control" placeholder="password" required></div>
-                            <div class="col-12"><button class="btn btn-danger w-100">Đăng nhập</button></div>
-                        </form>
-                        <button class="btn btn-outline-danger w-100 mt-2" onclick="logout()">Đăng xuất API</button>
+    <!-- Admin: Categories -->
+    <div id="admin-categories" class="admin-section" style="display:none">
+        <div class="admin-grid">
+            <div>
+                <div class="panel">
+                    <div class="panel-header"><span class="panel-title" id="cat-form-title"><i class="fas fa-plus-circle"></i> Thêm Danh Mục</span></div>
+                    <div class="form-group"><label class="form-label">Tên danh mục *</label><input type="text" id="cat-name" class="form-control" placeholder="Điện thoại..."></div>
+                    <input type="hidden" id="cat-edit-id" value="">
+                    <div style="display:flex;gap:.75rem">
+                        <button class="btn btn-accent" style="flex:1" onclick="submitCategory()"><i class="fas fa-save"></i> <span id="cat-btn-text">Thêm Danh Mục</span></button>
+                        <button class="btn btn-ghost" id="cat-cancel-btn" style="display:none" onclick="cancelEditCategory()">Hủy</button>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5>Đăng ký API</h5>
-                        <form id="registerForm" class="row g-2">
-                            <div class="col-12"><input id="regUsername" class="form-control" placeholder="username" required></div>
-                            <div class="col-12"><input id="regEmail" type="email" class="form-control" placeholder="email" required></div>
-                            <div class="col-12"><input id="regPassword" type="password" class="form-control" placeholder="password" required></div>
-                            <div class="col-12"><button class="btn btn-outline-danger w-100">Đăng ký</button></div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5>Response API gần nhất</h5>
-                        <pre id="apiLog" class="bg-dark text-light p-3 rounded small">Chưa có request</pre>
-                    </div>
+            <div>
+                <div class="panel">
+                    <div class="panel-header"><span class="panel-title"><i class="fas fa-tags"></i> Danh Sách Danh Mục</span><button class="btn btn-ghost btn-sm" onclick="loadAdminCategories()"><i class="fas fa-sync"></i></button></div>
+                    <div class="table-wrap"><table><thead><tr><th>ID</th><th>Tên</th><th></th></tr></thead><tbody id="admin-categories-tbody"></tbody></table></div>
                 </div>
             </div>
         </div>
-    </section>
-</main>
+    </div>
+
+    <!-- Admin: All Orders -->
+    <div id="admin-all-orders" class="admin-section" style="display:none">
+        <div class="panel">
+            <div class="panel-header"><span class="panel-title"><i class="fas fa-receipt"></i> Tất Cả Đơn Hàng</span><button class="btn btn-ghost btn-sm" onclick="loadAllOrders()"><i class="fas fa-sync"></i></button></div>
+            <div class="table-wrap"><table><thead><tr><th>ID</th><th>Khách hàng</th><th>SĐT</th><th>Địa chỉ</th><th>Tổng tiền</th><th>Ngày đặt</th><th></th></tr></thead><tbody id="all-orders-tbody"></tbody></table></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Product Detail -->
+<div class="modal-overlay" id="modal-product">
+    <div class="modal">
+        <div class="modal-header"><span class="modal-title"><i class="fas fa-box"></i> Chi Tiết Sản Phẩm</span><button class="modal-close" onclick="closeModal('modal-product')"><i class="fas fa-times"></i></button></div>
+        <div id="modal-product-body"></div>
+    </div>
+</div>
+
+<!-- MODAL: Checkout -->
+<div class="modal-overlay" id="modal-checkout">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header"><span class="modal-title"><i class="fas fa-credit-card"></i> Thông Tin Giao Hàng</span><button class="modal-close" onclick="closeModal('modal-checkout')"><i class="fas fa-times"></i></button></div>
+        <div class="form-group"><label class="form-label">Họ và tên *</label><input type="text" id="co-name" class="form-control" placeholder="Nguyễn Văn A"></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" id="co-email" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Số điện thoại *</label><input type="text" id="co-phone" class="form-control" placeholder="0912 345 678"></div>
+        <div class="form-group"><label class="form-label">Địa chỉ giao hàng *</label><input type="text" id="co-address" class="form-control" placeholder="123 Đường ABC, Q.1, TP.HCM"></div>
+        <div class="form-group">
+            <label class="form-label" style="margin-bottom:.75rem">Phương thức thanh toán *</label>
+            <div class="checkout-methods">
+                <div class="method-card selected" id="method-cod" onclick="selectMethod('cod')"><i class="fas fa-money-bill-wave"></i><span>COD</span></div>
+                <div class="method-card" id="method-bank_transfer" onclick="selectMethod('bank_transfer')"><i class="fas fa-university"></i><span>Chuyển khoản</span></div>
+                <div class="method-card" id="method-wallet" onclick="selectMethod('wallet')"><i class="fas fa-wallet"></i><span>Ví điện tử</span></div>
+            </div>
+        </div>
+        <button class="btn btn-success btn-full" onclick="doCheckout()"><i class="fas fa-check-circle"></i> Xác Nhận Đặt Hàng</button>
+    </div>
+</div>
+
+<!-- MODAL: Order Detail -->
+<div class="modal-overlay" id="modal-order">
+    <div class="modal" style="max-width:620px" onclick="event.stopPropagation()">
+        <div class="modal-header"><span class="modal-title"><i class="fas fa-receipt"></i> Chi Tiết Đơn Hàng</span><button class="modal-close" onclick="closeModal('modal-order')"><i class="fas fa-times"></i></button></div>
+        <div id="modal-order-body"></div>
+    </div>
+</div>
 
 <script>
-const API_BASE = 'api';
+/* ================================================================
+   TTG STORE – Full SPA
+   ✓ Slider tự động
+   ✓ Yêu cầu đăng nhập để thêm vào giỏ hàng
+   ✓ Giỏ hàng lưu vào DB, load khi đăng nhập
+   ✓ Đăng xuất → giỏ hàng xóa sạch
+   ✓ Admin upload ảnh từ máy
+================================================================ */
+const API = 'api';
 let categories = [];
+let currentCategoryId = null;
+let selectedPaymentMethod = 'cod';
+let currentUser = null;
 
-function imageSrc(image) {
-    if (!image) return 'https://via.placeholder.com/300x180?text=No+Image';
-    if (image.startsWith('http') || image.startsWith('public/')) return image;
-    return 'public/images/' + image;
-}
-
-function money(value) {
-    return Number(value || 0).toLocaleString('vi-VN') + ' đ';
-}
-
-function logApi(data) {
-    document.getElementById('apiLog').textContent = JSON.stringify(data, null, 2);
-}
-
-async function api(path, options = {}) {
-    const config = {
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-        ...options
-    };
-    if (config.body && typeof config.body !== 'string') {
-        config.body = JSON.stringify(config.body);
+// ─── ROUTER ───────────────────────────────────────────────────────
+function navigate(page) {
+    if (page === 'admin' && (!currentUser || currentUser.role !== 'admin')) {
+        toast('Bạn không có quyền truy cập trang Admin!', 'error'); return;
     }
-    const res = await fetch(`${API_BASE}/${path}`, config);
-    const text = await res.text();
-    let data;
-    try { data = JSON.parse(text); } catch { data = { status: false, message: text || 'Response không phải JSON' }; }
-    logApi(data);
-    return data;
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+    const el = document.getElementById('page-' + page);
+    if (el) el.classList.add('active');
+    const navEl = document.getElementById('nav-' + page);
+    if (navEl) navEl.classList.add('active');
+    window.scrollTo(0, 0);
+    if (page === 'home')   { loadCategoryChips(); loadProducts(); }
+    if (page === 'cart')   loadCart();
+    if (page === 'orders') loadMyOrders();
+    if (page === 'admin')  loadAdminPage();
 }
 
-async function loadCategories() {
-    const res = await api('category');
-    categories = res.data || [];
+// ─── TOAST ────────────────────────────────────────────────────────
+function toast(msg, type='info', dur=3500) {
+    const icons = {success:'fa-check-circle',error:'fa-exclamation-circle',info:'fa-info-circle'};
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<i class="fas ${icons[type]}"></i><span>${msg}</span>`;
+    document.getElementById('toast-container').appendChild(t);
+    setTimeout(() => { t.style.cssText='opacity:0;transform:translateX(20px);transition:.3s'; setTimeout(()=>t.remove(),300); }, dur);
+}
 
-    const filter = document.getElementById('filterCategory');
-    const productCategory = document.getElementById('productCategory');
-    filter.innerHTML = '<option value="">Tất cả</option>';
-    productCategory.innerHTML = '<option value="">Không chọn</option>';
+// ─── MODAL ────────────────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.addEventListener('click', e => { if(e.target.classList.contains('modal-overlay')) closeModal(e.target.id); });
 
-    categories.forEach(c => {
-        filter.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-        productCategory.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+// ─── FETCH HELPER ─────────────────────────────────────────────────
+async function api(path, opts={}) {
+    try {
+        const res = await fetch(`${API}/${path}`, {
+            headers: {'Content-Type':'application/json',...(opts.headers||{})},
+            ...opts
+        });
+        return await res.json();
+    } catch(e) { toast('Lỗi kết nối API','error'); return {status:false}; }
+}
+
+// ─── FORMAT ───────────────────────────────────────────────────────
+function fmtPrice(n) { return Number(n).toLocaleString('vi-VN') + ' ₫'; }
+function fmtDate(s)  { return s ? new Date(s).toLocaleString('vi-VN') : '–'; }
+function imgUrl(name) {
+    if (!name) return null;
+    if (name.startsWith('http') || name.startsWith('/')) return name;
+    return `public/images/${name}`;
+}
+
+// ─── SLIDER ───────────────────────────────────────────────────────
+const SLIDES = [
+    {
+        bg:'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=1400&q=80',
+        tag:'🔥 Hot Deal',
+        title:'iPhone 17 <span>Pro Max</span>',
+        desc:'Chip A19 Pro mạnh nhất từ trước đến nay. Camera 48MP, màn hình ProMotion 120Hz.',
+        cta:'Xem Ngay', cat:1
+    },
+    {
+        bg:'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=1400&q=80',
+        tag:'⚡ Mới Nhất',
+        title:'Samsung <span>Galaxy S25 Ultra</span>',
+        desc:'Galaxy AI thế hệ mới – Snapdragon 8 Elite, S Pen tích hợp, camera 200MP.',
+        cta:'Khám Phá', cat:1
+    },
+    {
+        bg:'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=1400&q=80',
+        tag:'💻 Laptop Mạnh',
+        title:'MacBook Air <span>M3 13"</span>',
+        desc:'Chip Apple M3 siêu tiết kiệm điện. Hoạt động im lặng không quạt, pin 18 giờ.',
+        cta:'Mua Ngay', cat:2
+    },
+    {
+        bg:'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=1400&q=80',
+        tag:'🎮 Gaming',
+        title:'Chuột & Bàn phím <span>Logitech</span>',
+        desc:'Logitech LIGHTSPEED không dây – độ trễ 1ms, pin 250 giờ, DPI 25600.',
+        cta:'Mua Sắm', cat:3
+    },
+];
+
+let slideIdx = 0;
+let slideTimer = null;
+
+function buildSlider() {
+    const track = document.getElementById('slider-track');
+    const dots  = document.getElementById('slider-dots');
+    track.innerHTML = '';
+    dots.innerHTML  = '';
+    SLIDES.forEach((s, i) => {
+        track.innerHTML += `
+        <div class="slide">
+            <div class="slide-bg" style="background-image:url('${s.bg}')"></div>
+            <div class="slide-content">
+                <div class="slide-tag">${s.tag}</div>
+                <h2 class="slide-title">${s.title}</h2>
+                <p class="slide-desc">${s.desc}</p>
+                <button class="slide-cta" onclick="filterCategory(${s.cat},null);navigate('home')">
+                    ${s.cta} <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>`;
+        dots.innerHTML += `<div class="dot${i===0?' active':''}" onclick="goSlide(${i})"></div>`;
     });
-
-    const tbody = document.getElementById('categoryTable');
-    tbody.innerHTML = categories.map(c => `
-        <tr>
-            <td>${c.id}</td>
-            <td>${c.name}</td>
-            <td>${c.description || ''}</td>
-            <td class="text-end">
-                <button class="btn btn-sm btn-outline-primary" onclick='editCategory(${JSON.stringify(c)})'>Sửa</button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory(${c.id})">Xóa</button>
-            </td>
-        </tr>
-    `).join('');
+    startSlideAuto();
 }
 
+function goSlide(n) {
+    slideIdx = (n + SLIDES.length) % SLIDES.length;
+    document.getElementById('slider-track').style.transform = `translateX(-${slideIdx*100}%)`;
+    document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i===slideIdx));
+}
+function slideMove(dir) { clearInterval(slideTimer); goSlide(slideIdx + dir); startSlideAuto(); }
+function startSlideAuto() {
+    clearInterval(slideTimer);
+    slideTimer = setInterval(() => goSlide(slideIdx + 1), 4000);
+}
+
+// ─── AUTH ─────────────────────────────────────────────────────────
+function renderAuthArea() {
+    const area    = document.getElementById('auth-area');
+    const adminLi = document.getElementById('nav-admin-li');
+    if (currentUser) {
+        const ini = currentUser.username.slice(0,2).toUpperCase();
+        area.innerHTML = `
+        <div style="position:relative">
+            <div class="user-btn" id="user-trigger">
+                <div class="user-avatar">${ini}</div>
+                <span>${currentUser.username}</span>
+                <i class="fas fa-chevron-down" style="font-size:.7rem;color:var(--text-muted)"></i>
+            </div>
+            <div id="user-dd" style="display:none;position:absolute;right:0;top:46px;background:var(--bg2);border:1px solid var(--gbr);border-radius:12px;padding:.5rem;z-index:9999;min-width:200px;box-shadow:var(--shadow)">
+                <div style="padding:.5rem .75rem;font-size:.8rem;color:var(--text-muted);border-bottom:1px solid var(--gbr);margin-bottom:.25rem">${currentUser.email||currentUser.username}</div>
+                <a onclick="navigate('orders')" style="display:flex;align-items:center;gap:.5rem;padding:.55rem .75rem;border-radius:8px;color:var(--text);cursor:pointer;font-size:.9rem;transition:background .15s" onmouseover="this.style.background='rgba(124,58,237,.1)'" onmouseout="this.style.background=''"><i class="fas fa-box"></i> Đơn hàng của tôi</a>
+                <a onclick="doLogout()" style="display:flex;align-items:center;gap:.5rem;padding:.55rem .75rem;border-radius:8px;color:var(--danger);cursor:pointer;font-size:.9rem;transition:background .15s" onmouseover="this.style.background='rgba(239,68,68,.08)'" onmouseout="this.style.background=''"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+            </div>
+        </div>`;
+        document.getElementById('user-trigger').onclick = e => {
+            e.stopPropagation();
+            const dd = document.getElementById('user-dd');
+            dd.style.display = dd.style.display==='none' ? 'block' : 'none';
+        };
+        document.addEventListener('click', () => { const dd=document.getElementById('user-dd'); if(dd) dd.style.display='none'; }, {once:true});
+        adminLi.style.display = currentUser.role==='admin' ? 'block' : 'none';
+    } else {
+        area.innerHTML = `<button class="btn-login" onclick="navigate('auth')"><i class="fas fa-sign-in-alt"></i> Đăng Nhập</button>`;
+        adminLi.style.display = 'none';
+    }
+}
+
+async function checkSession() {
+    const data = await api('account/me', {method:'GET'});
+    currentUser = data.status ? data.data : null;
+    renderAuthArea();
+}
+
+function switchTab(tab) {
+    document.getElementById('tab-login').classList.toggle('active', tab==='login');
+    document.getElementById('tab-register').classList.toggle('active', tab==='register');
+    document.getElementById('form-login').style.display    = tab==='login'    ? 'block' : 'none';
+    document.getElementById('form-register').style.display = tab==='register' ? 'block' : 'none';
+}
+
+async function doLogin() {
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    if (!username||!password) { toast('Vui lòng nhập tài khoản và mật khẩu','error'); return; }
+    const data = await api('account/login', {method:'POST', body:JSON.stringify({username,password})});
+    if (data.status) {
+        currentUser = data.data;
+        renderAuthArea();
+        toast(`Chào mừng ${currentUser.username}! 🎉`, 'success');
+        // Load cart từ DB vào badge
+        await syncCartBadge();
+        navigate('home');
+    } else {
+        toast(data.message||'Đăng nhập thất bại','error');
+    }
+}
+
+async function doRegister() {
+    const username = document.getElementById('reg-username').value.trim();
+    const email    = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+    if (!username||!email||!password) { toast('Vui lòng điền đầy đủ thông tin','error'); return; }
+    const data = await api('account/register', {method:'POST', body:JSON.stringify({username,email,password})});
+    if (data.status) { toast('Đăng ký thành công! Hãy đăng nhập.','success'); switchTab('login'); document.getElementById('login-username').value=username; }
+    else toast(data.message,'error');
+}
+
+async function doLogout() {
+    await api('account/logout', {method:'POST'});
+    currentUser = null; renderAuthArea();
+    // Giỏ hàng vẫn lưu trong DB, chỉ reset badge khi chưa đăng nhập
+    updateCartBadge({count:0, total:0});
+    toast('Đã đăng xuất. Đăng nhập lại để xem giỏ hàng của bạn.','info');
+    navigate('home');
+}
+
+// ─── CATEGORIES ───────────────────────────────────────────────────
+async function loadCategoryChips() {
+    const data = await api('category',{method:'GET'});
+    if (!data.status) return;
+    categories = data.data;
+    const c = document.getElementById('category-chips');
+    c.innerHTML = `<div class="chip active" onclick="filterCategory(null,this)"><i class="fas fa-th"></i> Tất Cả</div>`;
+    categories.forEach(cat => c.innerHTML += `<div class="chip" onclick="filterCategory(${cat.id},this)">${cat.name}</div>`);
+    const sel = document.getElementById('prod-cate');
+    if (sel) { sel.innerHTML='<option value="">-- Chọn danh mục --</option>'; categories.forEach(c => sel.innerHTML+=`<option value="${c.id}">${c.name}</option>`); }
+}
+
+function filterCategory(id, el) {
+    currentCategoryId = id;
+    document.querySelectorAll('#category-chips .chip').forEach(c => c.classList.remove('active'));
+    if (el) el.classList.add('active');
+    else { const all = document.querySelector('#category-chips .chip'); if(all) all.classList.add('active'); }
+    loadProducts();
+}
+
+// ─── PRODUCTS ─────────────────────────────────────────────────────
 async function loadProducts() {
+    const search = document.getElementById('search-input')?.value||'';
+    const sort   = document.getElementById('sort-select')?.value||'';
     const params = new URLSearchParams();
-    const search = document.getElementById('searchInput').value.trim();
-    const category = document.getElementById('filterCategory').value;
-    const sort = document.getElementById('sortPrice').value;
-    if (search) params.set('search', search);
-    if (category) params.set('category_id', category);
-    if (sort) params.set('sort_price', sort);
-
-    const res = await api(`product${params.toString() ? '?' + params.toString() : ''}`);
-    const products = res.data || [];
-    const box = document.getElementById('productList');
-
-    if (!products.length) {
-        box.innerHTML = '<div class="col-12"><div class="alert alert-warning">Không có sản phẩm.</div></div>';
+    if (search) params.set('search',search);
+    if (sort)   params.set('sort_price',sort);
+    if (currentCategoryId) params.set('category_id',currentCategoryId);
+    const grid = document.getElementById('product-grid');
+    grid.innerHTML = '<div class="spinner"></div>';
+    const data = await api('product'+(params.toString()?'?'+params:''),{method:'GET'});
+    if (!data.status||!data.data?.length) {
+        grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-box-open"></i><p>Không tìm thấy sản phẩm nào</p></div>`;
         return;
     }
-
-    box.innerHTML = products.map(p => `
-        <div class="col-md-4 col-xl-3">
-            <div class="card h-100">
-                <img class="card-img-top product-img" src="${imageSrc(p.image)}" alt="${p.name}">
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">${p.name}</h5>
-                    <p class="small text-muted mb-1">${p.category_name || 'Chưa phân loại'}</p>
-                    <p class="small flex-grow-1">${p.description || ''}</p>
-                    <p class="fw-bold text-danger mb-2">${money(p.price)}</p>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <button class="btn btn-sm btn-primary" onclick="addToCart(${p.id})">Thêm giỏ</button>
-                        <button class="btn btn-sm btn-outline-success" onclick='editProduct(${JSON.stringify(p)})'>Sửa</button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${p.id})">Xóa</button>
-                    </div>
-                </div>
+    grid.innerHTML='';
+    data.data.forEach(p => {
+        const url=imgUrl(p.image);
+        const imgEl=url?`<img src="${url}" alt="${p.name}" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-box\\'></i>'">`:'<i class="fas fa-box"></i>';
+        const catName=p.category_name||categories.find(c=>c.id==p.category_id)?.name||'';
+        grid.innerHTML+=`
+        <div class="product-card" onclick="openProductDetail(${p.id})">
+            <div class="product-img">${imgEl}</div>
+            <div class="product-info">
+                <div class="product-cat">${catName}</div>
+                <div class="product-name">${p.name}</div>
+                <div class="product-price">${fmtPrice(p.price)}</div>
+                <button class="btn-add-cart" onclick="event.stopPropagation();addToCart(${p.id})">
+                    <i class="fas fa-cart-plus"></i> Thêm vào giỏ
+                </button>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    });
 }
 
-function resetProductForm() {
-    document.getElementById('productId').value = '';
-    document.getElementById('productForm').reset();
-    document.getElementById('productStock').value = 0;
-    document.getElementById('saveProductBtn').textContent = 'Thêm bằng API';
+async function openProductDetail(id) {
+    openModal('modal-product');
+    document.getElementById('modal-product-body').innerHTML='<div class="spinner"></div>';
+    const data = await api(`product/${id}`,{method:'GET'});
+    if (!data.status) return;
+    const p=data.data;
+    const url=imgUrl(p.image);
+    const imgEl=url?`<img src="${url}" alt="${p.name}">`:'<i class="fas fa-box"></i>';
+    const catName=p.category_name||categories.find(c=>c.id==p.category_id)?.name||'Chưa phân loại';
+    document.getElementById('modal-product-body').innerHTML=`
+        <div class="prod-detail-img">${imgEl}</div>
+        <span class="badge badge-purple" style="margin-bottom:.75rem"><i class="fas fa-tag"></i> ${catName}</span>
+        <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:.5rem">${p.name}</h2>
+        <div style="font-size:1.5rem;font-weight:900;background:linear-gradient(135deg,#f59e0b,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.75rem">${fmtPrice(p.price)}</div>
+        <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:1.25rem;line-height:1.6;white-space:pre-line">${p.description||'Chưa có mô tả.'}</p>
+        <button class="btn btn-primary btn-full" onclick="addToCart(${p.id});closeModal('modal-product')">
+            <i class="fas fa-cart-plus"></i> Thêm vào giỏ hàng
+        </button>`;
 }
 
-function editProduct(p) {
-    document.getElementById('productId').value = p.id;
-    document.getElementById('productName').value = p.name || '';
-    document.getElementById('productPrice').value = p.price || '';
-    document.getElementById('productStock').value = p.stock || 0;
-    document.getElementById('productCategory').value = p.category_id || '';
-    document.getElementById('productImage').value = p.image || '';
-    document.getElementById('productDescription').value = p.description || '';
-    document.getElementById('saveProductBtn').textContent = 'Cập nhật bằng API';
-    window.location.hash = '#products';
+// ─── CART ─────────────────────────────────────────────────────────
+function updateCartBadge(cartData) {
+    const badge = document.getElementById('cart-badge');
+    const ct    = document.getElementById('cart-count-text');
+    const count = cartData?.count||0;
+    badge.style.display = count>0 ? 'flex' : 'none';
+    badge.textContent   = count;
+    ct.textContent      = count>0 ? `(${count})` : 'Giỏ';
 }
 
-async function deleteProduct(id) {
-    if (!confirm('Xóa sản phẩm này bằng API DELETE?')) return;
-    const res = await api(`product/delete/${id}`, { method: 'DELETE' });
-    alert(res.message || 'Đã gửi API');
-    await loadProducts();
-}
-
-async function addToCart(productId) {
-    const res = await api('cart/add', { method: 'POST', body: { product_id: productId, quantity: 1 } });
-    alert(res.message || 'Đã thêm');
-    await loadCart();
+async function syncCartBadge() {
+    if (!currentUser) return;
+    const data = await api('cart',{method:'GET'});
+    if (data.status) updateCartBadge(data.data);
 }
 
 async function loadCart() {
-    const res = await api('cart');
-    const data = res.data || { items: [], total: 0 };
-    const box = document.getElementById('cartBox');
-    if (!data.items.length) {
-        box.innerHTML = '<div class="alert alert-light border mb-0">Giỏ hàng đang rỗng.</div>';
+    const loginNotice = document.getElementById('cart-login-notice');
+    const cartMain    = document.getElementById('cart-main');
+
+    if (!currentUser) {
+        loginNotice.style.display = 'block';
+        cartMain.style.display    = 'none';
         return;
     }
-    box.innerHTML = `
-        <table class="table align-middle">
-            <thead><tr><th>Sản phẩm</th><th>Giá</th><th style="width:140px">Số lượng</th><th>Thành tiền</th><th></th></tr></thead>
-            <tbody>
-                ${data.items.map(i => `
-                    <tr>
-                        <td>${i.name}</td>
-                        <td>${money(i.price)}</td>
-                        <td><input type="number" min="1" value="${i.quantity}" class="form-control form-control-sm" onchange="updateCart(${i.id}, this.value)"></td>
-                        <td>${money(i.subtotal)}</td>
-                        <td><button class="btn btn-sm btn-outline-danger" onclick="removeCartItem(${i.id})">Xóa</button></td>
-                    </tr>
-                `).join('')}
-            </tbody>
-            <tfoot><tr><th colspan="3" class="text-end">Tổng:</th><th>${money(data.total)}</th><th></th></tr></tfoot>
-        </table>
-    `;
+    loginNotice.style.display = 'none';
+    cartMain.style.display    = 'block';
+
+    const data = await api('cart',{method:'GET'});
+    if (data.status) renderCart(data.data);
 }
 
-async function updateCart(id, qty) {
-    const res = await api(`cart/update/${id}`, { method: 'PUT', body: { quantity: Number(qty) } });
-    if (!res.status) alert(res.message);
-    await loadCart();
+function renderCart(cartData) {
+    updateCartBadge(cartData);
+    const listEl    = document.getElementById('cart-items-list');
+    const summaryEl = document.getElementById('cart-summary-body');
+    const totalEl   = document.getElementById('cart-total-display');
+    if (totalEl) totalEl.textContent = fmtPrice(cartData?.total||0);
+    if (!listEl) return;
+
+    if (!cartData?.items?.length) {
+        listEl.innerHTML = `<div class="empty-state"><i class="fas fa-shopping-cart"></i><p>Giỏ hàng trống.<br><a onclick="navigate('home')" style="color:var(--primary-light);cursor:pointer">Tiếp tục mua sắm</a></p></div>`;
+        summaryEl.innerHTML = '<p class="text-muted" style="font-size:.9rem">Giỏ hàng trống</p>';
+        return;
+    }
+    listEl.innerHTML=''; summaryEl.innerHTML='';
+    cartData.items.forEach(item => {
+        const url=imgUrl(item.image);
+        const imgEl=url?`<img src="${url}" alt="${item.name}" onerror="this.parentElement.innerHTML='<i class=\\'fas fa-box\\'></i>'">`:'<i class="fas fa-box"></i>';
+        listEl.innerHTML+=`
+        <div class="cart-item">
+            <div class="cart-item-img">${imgEl}</div>
+            <div class="cart-item-info">
+                <div class="cart-item-name">${item.name}</div>
+                <div class="cart-item-price">${fmtPrice(item.price)} × ${item.quantity} = <strong>${fmtPrice(item.subtotal)}</strong></div>
+                <div class="qty-ctrl">
+                    <button class="qty-btn" onclick="updateCartQty(${item.id},${item.quantity-1})"><i class="fas fa-minus"></i></button>
+                    <span class="qty-val">${item.quantity}</span>
+                    <button class="qty-btn" onclick="updateCartQty(${item.id},${item.quantity+1})"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="removeFromCart(${item.id})"><i class="fas fa-trash"></i></button>
+        </div>`;
+        summaryEl.innerHTML+=`<div class="summary-row"><span>${item.name} ×${item.quantity}</span><span>${fmtPrice(item.subtotal)}</span></div>`;
+    });
 }
 
-async function removeCartItem(id) {
-    const res = await api(`cart/delete/${id}`, { method: 'DELETE' });
-    alert(res.message || 'Đã xóa');
-    await loadCart();
+async function addToCart(productId) {
+    // Yêu cầu đăng nhập
+    if (!currentUser) {
+        toast('Vui lòng đăng nhập để thêm vào giỏ hàng 🔐','error');
+        setTimeout(()=>navigate('auth'), 800);
+        return;
+    }
+    const data = await api('cart/add',{method:'POST',body:JSON.stringify({product_id:productId,quantity:1})});
+    if (data.status) { toast('Đã thêm vào giỏ hàng! 🛒','success'); renderCart(data.data); }
+    else if (data.require_login) { toast('Vui lòng đăng nhập','error'); navigate('auth'); }
+    else toast(data.message,'error');
+}
+
+async function updateCartQty(productId, newQty) {
+    if (newQty<=0) { removeFromCart(productId); return; }
+    const data = await api(`cart/update/${productId}`,{method:'PUT',body:JSON.stringify({quantity:newQty})});
+    if (data.status) renderCart(data.data);
+}
+
+async function removeFromCart(productId) {
+    const data = await api(`cart/delete/${productId}`,{method:'DELETE'});
+    if (data.status) { toast('Đã xóa khỏi giỏ hàng','info'); renderCart(data.data); }
 }
 
 async function clearCart() {
-    const res = await api('cart/clear', { method: 'DELETE' });
-    alert(res.message || 'Đã xóa giỏ hàng');
-    await loadCart();
+    if (!confirm('Xóa toàn bộ giỏ hàng?')) return;
+    const data = await api('cart/clear',{method:'DELETE'});
+    if (data.status) { toast('Đã xóa giỏ hàng','info'); renderCart(data.data); }
 }
 
-async function loadOrders() {
-    const res = await api('order');
-    const orders = res.data || [];
-    const tbody = document.getElementById('orderTable');
-    tbody.innerHTML = orders.map(o => `
-        <tr>
-            <td>${o.id}</td>
-            <td>${o.customer_name}<br><small class="text-muted">${o.customer_phone}</small></td>
-            <td>${money(o.total_amount)}</td>
-            <td><span class="badge bg-secondary">${o.order_status || 'pending'}</span><br><small>${o.payment_status || 'unpaid'}</small></td>
-            <td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(${o.id})">Hủy</button></td>
-        </tr>
-    `).join('') || '<tr><td colspan="5" class="text-center text-muted">Chưa có đơn hàng</td></tr>';
+// ─── CHECKOUT ─────────────────────────────────────────────────────
+function openCheckout() {
+    const badge = document.getElementById('cart-badge');
+    if (badge.style.display==='none') { toast('Giỏ hàng đang trống!','error'); return; }
+    if (currentUser?.email) document.getElementById('co-email').value = currentUser.email||'';
+    openModal('modal-checkout');
+}
+function selectMethod(m) {
+    selectedPaymentMethod=m;
+    ['cod','bank_transfer','wallet'].forEach(k => document.getElementById('method-'+k)?.classList.toggle('selected',k===m));
+}
+async function doCheckout() {
+    const name=document.getElementById('co-name').value.trim();
+    const email=document.getElementById('co-email').value.trim();
+    const phone=document.getElementById('co-phone').value.trim();
+    const address=document.getElementById('co-address').value.trim();
+    if (!name||!phone||!address) { toast('Vui lòng điền đủ họ tên, SĐT và địa chỉ','error'); return; }
+    const orderData = await api('order/create',{method:'POST',body:JSON.stringify({customer_name:name,email,phone,address})});
+    if (!orderData.status) { toast(orderData.message||'Lỗi tạo đơn hàng','error'); return; }
+    await api('payment/create',{method:'POST',body:JSON.stringify({order_id:orderData.order_id,method:selectedPaymentMethod})});
+    closeModal('modal-checkout');
+    ['co-name','co-email','co-phone','co-address'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    const lbl={cod:'COD',bank_transfer:'Chuyển khoản',wallet:'Ví điện tử'}[selectedPaymentMethod];
+    toast(`🎉 Đặt hàng #${orderData.order_id} thành công – ${lbl}`,'success',6000);
+    updateCartBadge({count:0,total:0});
+    setTimeout(()=>navigate('orders'),1500);
+}
+
+// ─── ORDERS ───────────────────────────────────────────────────────
+async function loadMyOrders() {
+    const container=document.getElementById('orders-list');
+    container.innerHTML='<div class="spinner"></div>';
+    const data=await api('order',{method:'GET'});
+    if (!data.status||!data.data?.length) {
+        container.innerHTML=`<div class="empty-state"><i class="fas fa-box-open"></i><p>Chưa có đơn hàng nào</p></div>`; return;
+    }
+    container.innerHTML='';
+    data.data.forEach(o => {
+        container.innerHTML+=`
+        <div class="panel" style="margin-bottom:1rem">
+            <div class="panel-header">
+                <span style="font-weight:800;font-size:1rem"><i class="fas fa-receipt" style="color:var(--primary-light)"></i> Đơn #${o.id} – ${o.customer_name}</span>
+                <div style="display:flex;gap:.5rem">
+                    <button class="btn btn-ghost btn-sm" onclick="openOrderDetail(${o.id})"><i class="fas fa-eye"></i> Chi tiết</button>
+                    <button class="btn btn-danger btn-sm" onclick="cancelOrder(${o.id})"><i class="fas fa-times"></i> Hủy</button>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;font-size:.85rem;color:var(--text-muted)">
+                <div><i class="fas fa-phone"></i> ${o.phone||'–'}</div>
+                <div><i class="fas fa-map-marker-alt"></i> ${o.address||'–'}</div>
+                <div><i class="fas fa-dollar-sign"></i> Tổng: <strong style="color:var(--warning)">${fmtPrice(o.total_price)}</strong></div>
+                <div><i class="fas fa-clock"></i> ${fmtDate(o.created_at)}</div>
+            </div>
+        </div>`;
+    });
+}
+
+async function openOrderDetail(id) {
+    openModal('modal-order');
+    document.getElementById('modal-order-body').innerHTML='<div class="spinner"></div>';
+    const data=await api(`order/detail/${id}`,{method:'GET'});
+    if (!data.status) return;
+    const o=data.data;
+    const rows=(o.details||[]).map(d=>`<tr><td>${d.product_name||'–'}</td><td>${d.quantity}</td><td>${fmtPrice(d.price)}</td><td>${fmtPrice(d.quantity*d.price)}</td></tr>`).join('');
+    document.getElementById('modal-order-body').innerHTML=`
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;font-size:.9rem">
+            <div><span class="text-muted">Khách hàng:</span><br><strong>${o.customer_name}</strong></div>
+            <div><span class="text-muted">SĐT:</span><br><strong>${o.phone||'–'}</strong></div>
+            ${o.email?`<div><span class="text-muted">Email:</span><br><strong>${o.email}</strong></div>`:''}
+            <div style="grid-column:1/-1"><span class="text-muted">Địa chỉ:</span><br><strong>${o.address||'–'}</strong></div>
+        </div>
+        <div class="table-wrap"><table>
+            <thead><tr><th>Sản phẩm</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+            <tbody>${rows}</tbody>
+            <tfoot><tr><td colspan="3" style="text-align:right;font-weight:700;padding:.75rem 1rem;color:var(--text-muted)">Tổng cộng</td>
+            <td style="padding:.75rem 1rem;font-weight:900;color:var(--warning)">${fmtPrice(o.total_price)}</td></tr></tfoot>
+        </table></div>`;
 }
 
 async function cancelOrder(id) {
-    const res = await api(`order/cancel/${id}`, { method: 'DELETE' });
-    alert(res.message || 'Đã gửi API');
-    await loadOrders();
+    if (!confirm(`Hủy đơn hàng #${id}?`)) return;
+    const data=await api(`order/cancel/${id}`,{method:'DELETE'});
+    if (data.status) { toast('Đã hủy đơn hàng','info'); loadMyOrders(); }
+    else toast(data.message,'error');
 }
 
-function resetCategoryForm() {
-    document.getElementById('categoryId').value = '';
-    document.getElementById('categoryForm').reset();
-    document.getElementById('saveCategoryBtn').textContent = 'Thêm danh mục bằng API';
-}
+// ─── IMAGE UPLOAD ─────────────────────────────────────────────────
+let uploadedFilename = '';
 
-function editCategory(c) {
-    document.getElementById('categoryId').value = c.id;
-    document.getElementById('categoryName').value = c.name || '';
-    document.getElementById('categoryDescription').value = c.description || '';
-    document.getElementById('saveCategoryBtn').textContent = 'Cập nhật danh mục bằng API';
+function handleFileSelect(input) {
+    if (!input.files||!input.files[0]) return;
+    previewAndUpload(input.files[0]);
 }
-
-async function deleteCategory(id) {
-    if (!confirm('Xóa danh mục này bằng API DELETE?')) return;
-    const res = await api(`category/delete/${id}`, { method: 'DELETE' });
-    alert(res.message || 'Đã gửi API');
-    await loadCategories();
-    await loadProducts();
+function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('upload-area').classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) previewAndUpload(e.dataTransfer.files[0]);
 }
+async function previewAndUpload(file) {
+    // Preview
+    const preview = document.getElementById('upload-preview');
+    const reader  = new FileReader();
+    reader.onload = e => { preview.src=e.target.result; preview.style.display='block'; };
+    reader.readAsDataURL(file);
 
-async function refreshMe() {
-    const res = await api('account/me');
-    const el = document.getElementById('loginInfo');
-    if (res.status && res.data) {
-        el.textContent = `Đang đăng nhập: ${res.data.username} (${res.data.role})`;
-    } else {
-        el.textContent = 'Chưa đăng nhập';
+    // Upload
+    const status = document.getElementById('upload-status');
+    status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tải ảnh lên...';
+    status.style.color = 'var(--text-muted)';
+
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+        const res  = await fetch('api/product/uploadImage', {method:'POST', body:formData});
+        const data = await res.json();
+        if (data.status) {
+            uploadedFilename = data.filename;
+            document.getElementById('prod-image').value = data.filename;
+            status.innerHTML = `<i class="fas fa-check-circle" style="color:var(--success)"></i> Tải lên thành công: <strong>${data.filename}</strong>`;
+            status.style.color = 'var(--success)';
+        } else {
+            status.innerHTML = `<i class="fas fa-times-circle" style="color:var(--danger)"></i> ${data.message}`;
+            status.style.color = 'var(--danger)';
+        }
+    } catch(e) {
+        status.innerHTML = '<i class="fas fa-times-circle" style="color:var(--danger)"></i> Lỗi kết nối';
     }
 }
 
-async function logout() {
-    const res = await api('account/logout', { method: 'POST', body: {} });
-    alert(res.message || 'Đã đăng xuất');
-    await refreshMe();
+// ─── ADMIN ────────────────────────────────────────────────────────
+function adminTab(tab) {
+    document.querySelectorAll('.admin-section').forEach(el => el.style.display='none');
+    const tabs=['products','categories','all-orders'];
+    document.querySelectorAll('#admin-tabs .auth-tab').forEach((el,i) => el.classList.toggle('active',tabs[i]===tab));
+    document.getElementById('admin-'+tab).style.display='block';
+    if (tab==='products')   loadAdminProducts();
+    if (tab==='categories') loadAdminCategories();
+    if (tab==='all-orders') loadAllOrders();
 }
 
-document.getElementById('filterForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    await loadProducts();
-});
+async function loadAdminPage() {
+    await loadCategoryChips();
+    loadAdminStats();
+    loadAdminProducts();
+}
 
-document.getElementById('productForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const id = document.getElementById('productId').value;
+async function loadAdminStats() {
+    const [p,c,o]=await Promise.all([api('product',{method:'GET'}),api('category',{method:'GET'}),api('order',{method:'GET'})]);
+    document.getElementById('stat-products').textContent   = p.data?.length||0;
+    document.getElementById('stat-categories').textContent = c.data?.length||0;
+    document.getElementById('stat-orders').textContent     = o.data?.length||0;
+}
+
+async function loadAdminProducts() {
+    const data=await api('product',{method:'GET'});
+    const tbody=document.getElementById('admin-products-tbody');
+    if (!data.status||!data.data?.length) {
+        tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có sản phẩm</td></tr>'; return;
+    }
+    tbody.innerHTML=data.data.map(p=>{
+        const url=imgUrl(p.image);
+        const thumb=url?`<img src="${url}" style="width:42px;height:42px;object-fit:cover;border-radius:8px" onerror="this.style.display='none'">`:'<i class="fas fa-box" style="color:var(--text-dim)"></i>';
+        return `<tr>
+            <td><span class="badge badge-purple">#${p.id}</span></td>
+            <td>${thumb}</td>
+            <td><strong>${p.name}</strong><br><span style="font-size:.78rem;color:var(--text-dim)">${p.category_name||'–'}</span></td>
+            <td style="color:var(--warning);font-weight:600">${fmtPrice(p.price)}</td>
+            <td style="display:flex;gap:.4rem">
+                <button class="btn btn-ghost btn-sm" onclick="editProduct(${p.id})"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+async function submitProduct() {
+    const editId = document.getElementById('prod-edit-id').value;
     const payload = {
-        name: document.getElementById('productName').value.trim(),
-        price: Number(document.getElementById('productPrice').value),
-        stock: Number(document.getElementById('productStock').value || 0),
-        category_id: document.getElementById('productCategory').value || null,
-        image: document.getElementById('productImage').value.trim(),
-        description: document.getElementById('productDescription').value.trim()
+        name:        document.getElementById('prod-name').value.trim(),
+        price:       parseFloat(document.getElementById('prod-price').value),
+        description: document.getElementById('prod-desc').value.trim(),
+        category_id: parseInt(document.getElementById('prod-cate').value),
+        image:       document.getElementById('prod-image').value.trim()||null,
     };
-    const res = id
-        ? await api(`product/update/${id}`, { method: 'PUT', body: payload })
-        : await api('product/create', { method: 'POST', body: payload });
-    alert(res.message || 'Đã gửi API');
-    if (res.status) resetProductForm();
+    if (!payload.name)        { toast('Tên sản phẩm không được rỗng','error'); return; }
+    if (!payload.price)       { toast('Giá sản phẩm không hợp lệ','error');    return; }
+    if (!payload.category_id) { toast('Vui lòng chọn danh mục','error');       return; }
+
+    const data=editId
+        ? await api(`product/update/${editId}`,{method:'PUT',  body:JSON.stringify(payload)})
+        : await api('product/create',           {method:'POST', body:JSON.stringify(payload)});
+
+    if (data.status) { toast(data.message,'success'); cancelEditProduct(); loadAdminProducts(); loadAdminStats(); }
+    else toast(data.message,'error');
+}
+
+async function editProduct(id) {
+    const data=await api(`product/${id}`,{method:'GET'});
+    if (!data.status) return;
+    const p=data.data;
+    document.getElementById('prod-edit-id').value = p.id;
+    document.getElementById('prod-name').value    = p.name;
+    document.getElementById('prod-price').value   = p.price;
+    document.getElementById('prod-desc').value    = p.description||'';
+    document.getElementById('prod-cate').value    = p.category_id||'';
+    document.getElementById('prod-image').value   = p.image||'';
+    uploadedFilename = p.image||'';
+    // Show existing image preview
+    const url=imgUrl(p.image);
+    const preview=document.getElementById('upload-preview');
+    if (url) { preview.src=url; preview.style.display='block'; }
+    else { preview.style.display='none'; }
+    document.getElementById('upload-status').innerHTML = p.image?`<i class="fas fa-image" style="color:var(--accent)"></i> Ảnh hiện tại: <strong>${p.image}</strong>`:'';
+
+    document.getElementById('prod-form-title').innerHTML=`<i class="fas fa-edit"></i> Sửa Sản Phẩm #${p.id}`;
+    document.getElementById('prod-btn-text').textContent='Cập Nhật Sản Phẩm';
+    document.getElementById('prod-cancel-btn').style.display='block';
+    document.getElementById('prod-name').scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function cancelEditProduct() {
+    ['prod-edit-id','prod-name','prod-price','prod-image'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('prod-desc').value='';
+    document.getElementById('prod-cate').value='';
+    document.getElementById('upload-preview').style.display='none';
+    document.getElementById('upload-status').innerHTML='';
+    document.getElementById('prod-img-file').value='';
+    uploadedFilename='';
+    document.getElementById('prod-form-title').innerHTML='<i class="fas fa-plus-circle"></i> Thêm Sản Phẩm';
+    document.getElementById('prod-btn-text').textContent='Thêm Sản Phẩm';
+    document.getElementById('prod-cancel-btn').style.display='none';
+}
+
+async function deleteProduct(id) {
+    if (!confirm(`Xóa sản phẩm #${id}?`)) return;
+    const data=await api(`product/delete/${id}`,{method:'DELETE'});
+    if (data.status) { toast(data.message,'success'); loadAdminProducts(); loadAdminStats(); }
+    else toast(data.message,'error');
+}
+
+// Admin: Categories
+async function loadAdminCategories() {
+    const data=await api('category',{method:'GET'});
+    const tbody=document.getElementById('admin-categories-tbody');
+    if (!data.status||!data.data?.length) {
+        tbody.innerHTML='<tr><td colspan="3" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có danh mục</td></tr>'; return;
+    }
+    tbody.innerHTML=data.data.map(c=>`
+        <tr>
+            <td><span class="badge badge-cyan">#${c.id}</span></td>
+            <td><strong>${c.name}</strong></td>
+            <td style="display:flex;gap:.4rem">
+                <button class="btn btn-ghost btn-sm" onclick="editCategory(${c.id},'${c.name.replace(/'/g,"\\'")}')"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deleteCategory(${c.id})"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`).join('');
+}
+
+async function submitCategory() {
+    const editId=document.getElementById('cat-edit-id').value;
+    const name=document.getElementById('cat-name').value.trim();
+    if (!name) { toast('Tên danh mục không được rỗng','error'); return; }
+    const data=editId
+        ? await api(`category/update/${editId}`,{method:'PUT',  body:JSON.stringify({name})})
+        : await api('category/create',           {method:'POST', body:JSON.stringify({name})});
+    if (data.status) { toast(data.message,'success'); cancelEditCategory(); loadAdminCategories(); loadCategoryChips(); loadAdminStats(); }
+    else toast(data.message,'error');
+}
+
+function editCategory(id,name) {
+    document.getElementById('cat-edit-id').value=id;
+    document.getElementById('cat-name').value=name;
+    document.getElementById('cat-form-title').innerHTML=`<i class="fas fa-edit"></i> Sửa Danh Mục #${id}`;
+    document.getElementById('cat-btn-text').textContent='Cập Nhật';
+    document.getElementById('cat-cancel-btn').style.display='block';
+}
+function cancelEditCategory() {
+    document.getElementById('cat-edit-id').value='';
+    document.getElementById('cat-name').value='';
+    document.getElementById('cat-form-title').innerHTML='<i class="fas fa-plus-circle"></i> Thêm Danh Mục';
+    document.getElementById('cat-btn-text').textContent='Thêm Danh Mục';
+    document.getElementById('cat-cancel-btn').style.display='none';
+}
+
+async function deleteCategory(id) {
+    if (!confirm(`Xóa danh mục #${id}?`)) return;
+    const data=await api(`category/delete/${id}`,{method:'DELETE'});
+    if (data.status) { toast(data.message,'success'); loadAdminCategories(); loadCategoryChips(); }
+    else toast(data.message,'error');
+}
+
+// Admin: All Orders
+async function loadAllOrders() {
+    const data=await api('order',{method:'GET'});
+    const tbody=document.getElementById('all-orders-tbody');
+    if (!data.status||!data.data?.length) {
+        tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Không có đơn hàng</td></tr>'; return;
+    }
+    tbody.innerHTML=data.data.map(o=>`
+        <tr>
+            <td><strong>#${o.id}</strong></td>
+            <td>${o.customer_name}</td>
+            <td>${o.phone||'–'}</td>
+            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.address||'–'}</td>
+            <td style="color:var(--warning);font-weight:600">${fmtPrice(o.total_price)}</td>
+            <td style="color:var(--text-dim);font-size:.82rem">${fmtDate(o.created_at)}</td>
+            <td style="display:flex;gap:.4rem">
+                <button class="btn btn-ghost btn-sm" onclick="openOrderDetail(${o.id})"><i class="fas fa-eye"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="adminDeleteOrder(${o.id})"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`).join('');
+}
+
+async function adminDeleteOrder(id) {
+    if (!confirm(`Xóa đơn hàng #${id}?`)) return;
+    const data=await api(`order/cancel/${id}`,{method:'DELETE'});
+    if (data.status) { toast('Đã xóa đơn hàng','success'); loadAllOrders(); loadAdminStats(); }
+    else toast(data.message,'error');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+document.getElementById('search-input').addEventListener('keydown', e=>{if(e.key==='Enter')loadProducts();});
+document.getElementById('sort-select').addEventListener('change', loadProducts);
+
+async function init() {
+    buildSlider();
+    await checkSession();
+    await loadCategoryChips();
     await loadProducts();
-});
+    if (currentUser) await syncCartBadge();
+}
 
-document.getElementById('categoryForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const id = document.getElementById('categoryId').value;
-    const payload = {
-        name: document.getElementById('categoryName').value.trim(),
-        description: document.getElementById('categoryDescription').value.trim()
-    };
-    const res = id
-        ? await api(`category/update/${id}`, { method: 'PUT', body: payload })
-        : await api('category/create', { method: 'POST', body: payload });
-    alert(res.message || 'Đã gửi API');
-    if (res.status) resetCategoryForm();
-    await loadCategories();
-    await loadProducts();
-});
-
-document.getElementById('checkoutForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const res = await api('order/create', {
-        method: 'POST',
-        body: {
-            customer_name: document.getElementById('customerName').value.trim(),
-            customer_phone: document.getElementById('customerPhone').value.trim(),
-            customer_address: document.getElementById('customerAddress').value.trim()
-        }
-    });
-    alert(res.message || 'Đã gửi API');
-    if (res.status) document.getElementById('checkoutForm').reset();
-    await loadCart();
-    await loadOrders();
-});
-
-document.getElementById('loginForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const res = await api('account/login', {
-        method: 'POST',
-        body: {
-            username: document.getElementById('loginUsername').value.trim(),
-            password: document.getElementById('loginPassword').value
-        }
-    });
-    alert(res.message || 'Đã gửi API');
-    await refreshMe();
-});
-
-document.getElementById('registerForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const res = await api('account/register', {
-        method: 'POST',
-        body: {
-            username: document.getElementById('regUsername').value.trim(),
-            email: document.getElementById('regEmail').value.trim(),
-            password: document.getElementById('regPassword').value
-        }
-    });
-    alert(res.message || 'Đã gửi API');
-    if (res.status) document.getElementById('registerForm').reset();
-});
-
-window.addEventListener('DOMContentLoaded', async () => {
-    await loadCategories();
-    await loadProducts();
-    await loadCart();
-    await loadOrders();
-    await refreshMe();
-});
+init();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -13,14 +13,15 @@ $rawUrl = $_GET['url'] ?? '';
 $rawUrl = trim($rawUrl, '/');
 $url = $rawUrl === '' ? [] : explode('/', $rawUrl);
 
-// ===============================
-// WEB API: mọi endpoint bắt đầu bằng /api và luôn trả JSON
-// ===============================
 if (isset($url[0]) && strtolower($url[0]) === 'api') {
     header("Access-Control-Allow-Origin: *");
-    header("Content-Type: application/json; charset=UTF-8");
     header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
     header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+
+    $isMultipart = isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== false;
+    if (!$isMultipart) {
+        header("Content-Type: application/json; charset=UTF-8");
+    }
 
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
         http_response_code(200);
@@ -28,7 +29,7 @@ if (isset($url[0]) && strtolower($url[0]) === 'api') {
         exit;
     }
 
-    array_shift($url); // bỏ api
+    array_shift($url);
     $resource = strtolower($url[0] ?? 'product');
     $aliases = [
         'products' => 'product',
