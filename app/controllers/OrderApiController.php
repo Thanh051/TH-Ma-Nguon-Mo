@@ -31,11 +31,23 @@ class OrderApiController extends BaseApiController {
         return $total;
     }
 
-    // GET /api/order  – danh sách tất cả đơn hàng
+    // GET /api/order  – danh sách tất cả đơn hàng (chỉ admin)
     public function index() {
         if (!$this->requireMethod('GET')) return;
+        $user = $this->requireRole('admin');
         $stmt = $this->conn->prepare("SELECT * FROM orders ORDER BY id DESC");
         $stmt->execute();
+        $orders = $stmt->fetchAll();
+        $this->json(['status' => true, 'data' => $orders]);
+    }
+
+    // GET /api/order/mine – đơn hàng của user đang đăng nhập
+    public function mine() {
+        if (!$this->requireMethod('GET')) return;
+        $user = $this->requireAuth();
+        $userId = (int)$user['id'];
+        $stmt = $this->conn->prepare("SELECT * FROM orders WHERE user_id = :uid ORDER BY id DESC");
+        $stmt->execute([':uid' => $userId]);
         $orders = $stmt->fetchAll();
         $this->json(['status' => true, 'data' => $orders]);
     }
@@ -43,11 +55,17 @@ class OrderApiController extends BaseApiController {
     // GET /api/order/detail/{id}
     public function detail($id) {
         if (!$this->requireMethod('GET')) return;
+        $user = $this->requireAuth();
         $stmt = $this->conn->prepare("SELECT * FROM orders WHERE id = :id LIMIT 1");
         $stmt->execute([':id' => (int)$id]);
         $order = $stmt->fetch();
         if (!$order) {
             $this->json(['status' => false, 'message' => 'Đơn hàng không tồn tại'], 404);
+            return;
+        }
+        // Chỉ admin hoặc chính chủ mới xem được chi tiết
+        if (($user['role'] ?? '') !== 'admin' && (int)$order['user_id'] !== (int)$user['id']) {
+            $this->json(['status' => false, 'message' => 'Bạn không có quyền xem đơn hàng này'], 403);
             return;
         }
         $detailStmt = $this->conn->prepare(
@@ -138,13 +156,19 @@ class OrderApiController extends BaseApiController {
     // DELETE /api/order/cancel/{id}
     public function cancel($id) {
         if (!$this->requireMethod('DELETE')) return;
-        $stmt = $this->conn->prepare("SELECT id FROM orders WHERE id = :id LIMIT 1");
+        $user = $this->requireAuth();
+        $stmt = $this->conn->prepare("SELECT id, user_id FROM orders WHERE id = :id LIMIT 1");
         $stmt->execute([':id' => (int)$id]);
-        if (!$stmt->fetch()) {
+        $order = $stmt->fetch();
+        if (!$order) {
             $this->json(['status' => false, 'message' => 'Đơn hàng không tồn tại'], 404);
             return;
         }
-        // Soft delete: just remove the record (no status column in real schema)
+        // Chỉ admin hoặc chính chủ đơn hàng mới được hủy
+        if (($user['role'] ?? '') !== 'admin' && (int)$order['user_id'] !== (int)$user['id']) {
+            $this->json(['status' => false, 'message' => 'Bạn không có quyền hủy đơn hàng này'], 403);
+            return;
+        }
         $del = $this->conn->prepare("DELETE FROM orders WHERE id = :id");
         $ok  = $del->execute([':id' => (int)$id]);
         $this->json([

@@ -207,8 +207,21 @@
         .page-header p{color:var(--text-muted);font-size:.95rem}
         .prod-detail-img{width:100%;height:240px;border-radius:14px;background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.08));display:flex;align-items:center;justify-content:center;font-size:5rem;color:rgba(124,58,237,.2);margin-bottom:1.25rem;overflow:hidden}
         .prod-detail-img img{width:100%;height:100%;object-fit:cover}
+        /* ── PROFILE PAGE ── */
+        .profile-hero{display:flex;gap:2rem;align-items:flex-start;flex-wrap:wrap;margin-bottom:2rem}
+        .avatar-wrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:.75rem}
+        .avatar-big{width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:2.8rem;font-weight:800;color:#fff;border:3px solid var(--gbr);overflow:hidden;position:relative}
+        .avatar-big img{width:100%;height:100%;object-fit:cover}
+        .avatar-edit-btn{background:rgba(124,58,237,.2);border:1px dashed var(--primary);color:var(--primary-light);padding:.45rem 1rem;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:.4rem;font-family:inherit}
+        .avatar-edit-btn:hover{background:rgba(124,58,237,.35)}
+        .profile-info{flex:1;min-width:260px}
+        .profile-name{font-size:1.6rem;font-weight:800;margin-bottom:.25rem}
+        .profile-role{display:inline-flex;align-items:center;gap:.4rem;padding:.25rem .75rem;border-radius:50px;font-size:.78rem;font-weight:700;background:rgba(124,58,237,.2);color:var(--primary-light);margin-bottom:1rem}
+        .profile-tabs{display:flex;gap:.4rem;background:rgba(15,15,23,.6);border-radius:10px;padding:.3rem;margin-bottom:1.5rem;width:fit-content}
+        .profile-tab{padding:.5rem 1.25rem;border-radius:8px;cursor:pointer;font-size:.88rem;font-weight:600;color:var(--text-muted);transition:all .2s}
+        .profile-tab.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff}
         ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--primary-dark);border-radius:3px}
-        @media(max-width:768px){.nav-links{display:none}.admin-grid{grid-template-columns:1fr}.stat-cards{grid-template-columns:repeat(2,1fr)}.slider-wrap{height:220px}.slide-title{font-size:1.4rem}}
+        @media(max-width:768px){.nav-links{display:none}.admin-grid{grid-template-columns:1fr}.stat-cards{grid-template-columns:repeat(2,1fr)}.slider-wrap{height:220px}.slide-title{font-size:1.4rem}.profile-hero{gap:1rem}}
     </style>
 </head>
 <body>
@@ -219,6 +232,7 @@
     <ul class="nav-links">
         <li><a id="nav-home" onclick="navigate('home')" class="active"><i class="fas fa-home"></i> Trang Chủ</a></li>
         <li><a id="nav-orders" onclick="navigate('orders')"><i class="fas fa-box"></i> Đơn Hàng</a></li>
+        <li id="nav-profile-li" style="display:none"><a id="nav-profile" onclick="navigate('profile')"><i class="fas fa-user-circle"></i> Tài Khoản</a></li>
         <li id="nav-admin-li" style="display:none"><a id="nav-admin" onclick="navigate('admin')"><i class="fas fa-shield-alt"></i> Quản Trị</a></li>
     </ul>
     <div class="navbar-right">
@@ -292,8 +306,8 @@
 <!-- ORDERS -->
 <div id="page-orders" class="page">
     <div class="page-header">
-        <h1><i class="fas fa-box text-gradient"></i> Đơn Hàng</h1>
-        <p>Danh sách các đơn hàng đã đặt</p>
+        <h1><i class="fas fa-box text-gradient"></i> Đơn Hàng Của Tôi</h1>
+        <p>Danh sách các đơn hàng bạn đã đặt</p>
     </div>
     <div id="orders-list"><div class="spinner"></div></div>
 </div>
@@ -414,6 +428,84 @@
     </div>
 </div>
 
+<!-- PROFILE -->
+<div id="page-profile" class="page">
+    <div class="page-header">
+        <h1><i class="fas fa-user-circle text-gradient"></i> Thông Tin Tài Khoản</h1>
+        <p>Quản lý hồ sơ cá nhân, ảnh đại diện và mật khẩu</p>
+    </div>
+
+    <div class="profile-hero">
+        <!-- Avatar -->
+        <div class="avatar-wrap">
+            <div class="avatar-big" id="profile-avatar-display">
+                <span id="profile-avatar-initials"></span>
+            </div>
+            <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="doUploadAvatar(this)">
+            <button class="avatar-edit-btn" onclick="document.getElementById('avatar-file-input').click()">
+                <i class="fas fa-camera"></i> Đổi ảnh
+            </button>
+            <div id="avatar-upload-status" style="font-size:.78rem;color:var(--text-muted);text-align:center"></div>
+        </div>
+        <!-- Info -->
+        <div class="profile-info">
+            <div class="profile-name" id="profile-display-name">--</div>
+            <div class="profile-role"><i class="fas fa-shield-alt"></i> <span id="profile-display-role">--</span></div>
+            <p style="color:var(--text-muted);font-size:.9rem" id="profile-display-email">--</p>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="profile-tabs">
+        <div class="profile-tab active" id="ptab-info" onclick="switchProfileTab('info')"><i class="fas fa-id-card"></i> Hồ Sơ</div>
+        <div class="profile-tab" id="ptab-password" onclick="switchProfileTab('password')"><i class="fas fa-lock"></i> Mật Khẩu</div>
+    </div>
+
+    <!-- Tab: Hồ Sơ -->
+    <div id="profile-tab-info">
+        <div class="panel" style="max-width:540px">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fas fa-edit"></i> Cập Nhật Hồ Sơ</span>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tên tài khoản</label>
+                <input type="text" id="profile-username" class="form-control" disabled style="opacity:.6">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="profile-email" class="form-control" placeholder="email@example.com">
+            </div>
+            <button class="btn btn-primary" onclick="doSaveProfile()" style="margin-top:.5rem">
+                <i class="fas fa-save"></i> Lưu Thay Đổi
+            </button>
+        </div>
+    </div>
+
+    <!-- Tab: Mật Khẩu -->
+    <div id="profile-tab-password" style="display:none">
+        <div class="panel" style="max-width:540px">
+            <div class="panel-header">
+                <span class="panel-title"><i class="fas fa-lock"></i> Đổi Mật Khẩu</span>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Mật khẩu hiện tại</label>
+                <input type="password" id="pwd-old" class="form-control" placeholder="Nhập mật khẩu cũ...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Mật khẩu mới (≥ 6 ký tự)</label>
+                <input type="password" id="pwd-new" class="form-control" placeholder="Nhập mật khẩu mới...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Xác nhận mật khẩu mới</label>
+                <input type="password" id="pwd-confirm" class="form-control" placeholder="Nhập lại mật khẩu mới...">
+            </div>
+            <button class="btn btn-success" onclick="doChangePassword()" style="margin-top:.5rem">
+                <i class="fas fa-key"></i> Đổi Mật Khẩu
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL: Product Detail -->
 <div class="modal-overlay" id="modal-product">
     <div class="modal">
@@ -470,6 +562,12 @@ function navigate(page) {
     if (page === 'admin' && (!currentUser || currentUser.role !== 'admin')) {
         toast('Bạn không có quyền truy cập trang Admin!', 'error'); return;
     }
+    if (page === 'orders' && !currentUser) {
+        toast('Vui lòng đăng nhập để xem đơn hàng!', 'error'); navigate('auth'); return;
+    }
+    if (page === 'profile' && !currentUser) {
+        toast('Vui lòng đăng nhập để xem thông tin tài khoản!', 'error'); navigate('auth'); return;
+    }
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
     const el = document.getElementById('page-' + page);
@@ -481,6 +579,7 @@ function navigate(page) {
     if (page === 'cart')   loadCart();
     if (page === 'orders') loadMyOrders();
     if (page === 'admin')  loadAdminPage();
+    if (page === 'profile') loadProfilePage();
 }
 
 // ─── TOAST ────────────────────────────────────────────────────────
@@ -501,9 +600,15 @@ document.addEventListener('click', e => { if(e.target.classList.contains('modal-
 // ─── FETCH HELPER ─────────────────────────────────────────────────
 async function api(path, opts={}) {
     try {
+        const token = localStorage.getItem('token');
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            ...(opts.headers || {})
+        };
         const res = await fetch(`${API}/${path}`, {
-            headers: {'Content-Type':'application/json',...(opts.headers||{})},
-            ...opts
+            ...opts,
+            headers: headers
         });
         return await res.json();
     } catch(e) { toast('Lỗi kết nối API','error'); return {status:false}; }
@@ -591,17 +696,22 @@ function startSlideAuto() {
 function renderAuthArea() {
     const area    = document.getElementById('auth-area');
     const adminLi = document.getElementById('nav-admin-li');
+    const profileLi = document.getElementById('nav-profile-li');
     if (currentUser) {
         const ini = currentUser.username.slice(0,2).toUpperCase();
+        const avatarHtml = currentUser.avatar_url
+            ? `<img src="${currentUser.avatar_url}?t=${Date.now()}" style="width:34px;height:34px;border-radius:50%;object-fit:cover" onerror="this.outerHTML='<div class=user-avatar>${ini}</div>'">`
+            : `<div class="user-avatar">${ini}</div>`;
         area.innerHTML = `
         <div style="position:relative">
             <div class="user-btn" id="user-trigger">
-                <div class="user-avatar">${ini}</div>
+                ${avatarHtml}
                 <span>${currentUser.username}</span>
                 <i class="fas fa-chevron-down" style="font-size:.7rem;color:var(--text-muted)"></i>
             </div>
             <div id="user-dd" style="display:none;position:absolute;right:0;top:46px;background:var(--bg2);border:1px solid var(--gbr);border-radius:12px;padding:.5rem;z-index:9999;min-width:200px;box-shadow:var(--shadow)">
                 <div style="padding:.5rem .75rem;font-size:.8rem;color:var(--text-muted);border-bottom:1px solid var(--gbr);margin-bottom:.25rem">${currentUser.email||currentUser.username}</div>
+                <a onclick="navigate('profile')" style="display:flex;align-items:center;gap:.5rem;padding:.55rem .75rem;border-radius:8px;color:var(--text);cursor:pointer;font-size:.9rem;transition:background .15s" onmouseover="this.style.background='rgba(124,58,237,.1)'" onmouseout="this.style.background=''"><i class="fas fa-user-circle"></i> Tài khoản của tôi</a>
                 <a onclick="navigate('orders')" style="display:flex;align-items:center;gap:.5rem;padding:.55rem .75rem;border-radius:8px;color:var(--text);cursor:pointer;font-size:.9rem;transition:background .15s" onmouseover="this.style.background='rgba(124,58,237,.1)'" onmouseout="this.style.background=''"><i class="fas fa-box"></i> Đơn hàng của tôi</a>
                 <a onclick="doLogout()" style="display:flex;align-items:center;gap:.5rem;padding:.55rem .75rem;border-radius:8px;color:var(--danger);cursor:pointer;font-size:.9rem;transition:background .15s" onmouseover="this.style.background='rgba(239,68,68,.08)'" onmouseout="this.style.background=''"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
             </div>
@@ -613,9 +723,11 @@ function renderAuthArea() {
         };
         document.addEventListener('click', () => { const dd=document.getElementById('user-dd'); if(dd) dd.style.display='none'; }, {once:true});
         adminLi.style.display = currentUser.role==='admin' ? 'block' : 'none';
+        profileLi.style.display = 'block';
     } else {
         area.innerHTML = `<button class="btn-login" onclick="navigate('auth')"><i class="fas fa-sign-in-alt"></i> Đăng Nhập</button>`;
         adminLi.style.display = 'none';
+        profileLi.style.display = 'none';
     }
 }
 
@@ -638,6 +750,7 @@ async function doLogin() {
     if (!username||!password) { toast('Vui lòng nhập tài khoản và mật khẩu','error'); return; }
     const data = await api('account/login', {method:'POST', body:JSON.stringify({username,password})});
     if (data.status) {
+        localStorage.setItem('token', data.token); // Lưu token JWT vào localStorage
         currentUser = data.data;
         renderAuthArea();
         toast(`Chào mừng ${currentUser.username}! 🎉`, 'success');
@@ -661,6 +774,7 @@ async function doRegister() {
 
 async function doLogout() {
     await api('account/logout', {method:'POST'});
+    localStorage.removeItem('token'); // Xóa token JWT khỏi localStorage
     currentUser = null; renderAuthArea();
     // Giỏ hàng vẫn lưu trong DB, chỉ reset badge khi chưa đăng nhập
     updateCartBadge({count:0, total:0});
@@ -870,11 +984,14 @@ async function doCheckout() {
 
 // ─── ORDERS ───────────────────────────────────────────────────────
 async function loadMyOrders() {
+    if (!currentUser) {
+        document.getElementById('orders-list').innerHTML=`<div class="empty-state"><i class="fas fa-lock"></i><p>Vui lòng <a onclick="navigate('auth')" style="color:var(--primary-light);cursor:pointer">&#0273;ăng nhập</a> để xem đơn hàng</p></div>`; return;
+    }
     const container=document.getElementById('orders-list');
     container.innerHTML='<div class="spinner"></div>';
-    const data=await api('order',{method:'GET'});
+    const data=await api('order/mine',{method:'GET'});
     if (!data.status||!data.data?.length) {
-        container.innerHTML=`<div class="empty-state"><i class="fas fa-box-open"></i><p>Chưa có đơn hàng nào</p></div>`; return;
+        container.innerHTML=`<div class="empty-state"><i class="fas fa-box-open"></i><p>Bạn chưa có đơn hàng nào</p></div>`; return;
     }
     container.innerHTML='';
     data.data.forEach(o => {
@@ -1158,6 +1275,108 @@ async function adminDeleteOrder(id) {
     const data=await api(`order/cancel/${id}`,{method:'DELETE'});
     if (data.status) { toast('Đã xóa đơn hàng','success'); loadAllOrders(); loadAdminStats(); }
     else toast(data.message,'error');
+}
+
+// ─── PROFILE PAGE ────────────────────────────────────────────────────────────────
+function renderProfileHero(user) {
+    const ini = (user.username||'?').slice(0,2).toUpperCase();
+    const avatarWrap = document.getElementById('profile-avatar-display');
+    const initialsEl = document.getElementById('profile-avatar-initials');
+    if (user.avatar_url) {
+        avatarWrap.innerHTML = `<img src="${user.avatar_url}?t=${Date.now()}" alt="Avatar" style="width:100%;height:100%;object-fit:cover">`;
+    } else {
+        avatarWrap.innerHTML = `<span>${ini}</span>`;
+    }
+    document.getElementById('profile-display-name').textContent = user.username || '--';
+    document.getElementById('profile-display-role').textContent = user.role === 'admin' ? 'Đại lý quản trị' : 'Thành viên';
+    document.getElementById('profile-display-email').textContent = user.email || 'Chưa có email';
+    document.getElementById('profile-username').value = user.username || '';
+    document.getElementById('profile-email').value = user.email || '';
+}
+
+async function loadProfilePage() {
+    if (!currentUser) return;
+    const data = await api('account/me', {method:'GET'});
+    if (data.status) {
+        currentUser = data.data;
+        renderProfileHero(currentUser);
+    }
+}
+
+function switchProfileTab(tab) {
+    document.getElementById('profile-tab-info').style.display     = tab === 'info'     ? 'block' : 'none';
+    document.getElementById('profile-tab-password').style.display = tab === 'password' ? 'block' : 'none';
+    document.getElementById('ptab-info').classList.toggle('active',     tab === 'info');
+    document.getElementById('ptab-password').classList.toggle('active', tab === 'password');
+}
+
+async function doUploadAvatar(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const statusEl = document.getElementById('avatar-upload-status');
+    statusEl.textContent = 'Đang tải lên...';
+    const formData = new FormData();
+    formData.append('avatar', file);
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch('api/account/uploadAvatar', {
+            method: 'POST',
+            headers: token ? {'Authorization': `Bearer ${token}`} : {},
+            body: formData
+        });
+        const data = await res.json();
+        if (data.status) {
+            if (data.token) localStorage.setItem('token', data.token);
+            currentUser = data.data;
+            renderProfileHero(currentUser);
+            renderAuthArea();
+            statusEl.textContent = '✓ Ảnh đã được cập nhật!';
+            statusEl.style.color = 'var(--success)';
+            toast('Ảnh đại diện cập nhật thành công 🎉', 'success');
+        } else {
+            statusEl.textContent = data.message || 'Lỗi upload';
+            statusEl.style.color = 'var(--danger)';
+            toast(data.message || 'Upload thất bại', 'error');
+        }
+    } catch(e) {
+        statusEl.textContent = 'Lỗi kết nối';
+        statusEl.style.color = 'var(--danger)';
+        toast('Lỗi kết nối khi upload', 'error');
+    }
+    input.value = ''; // reset input
+}
+
+async function doSaveProfile() {
+    const email = document.getElementById('profile-email').value.trim();
+    if (!email) { toast('Vui lòng nhập email', 'error'); return; }
+    const data = await api('account/profile', {method:'PUT', body: JSON.stringify({email})});
+    if (data.status) {
+        if (data.token) localStorage.setItem('token', data.token);
+        currentUser = data.data;
+        renderProfileHero(currentUser);
+        renderAuthArea();
+        toast('Cập nhật hồ sơ thành công ✓', 'success');
+    } else {
+        toast(data.message || 'Cập nhật thất bại', 'error');
+    }
+}
+
+async function doChangePassword() {
+    const oldPwd  = document.getElementById('pwd-old').value;
+    const newPwd  = document.getElementById('pwd-new').value;
+    const confirm = document.getElementById('pwd-confirm').value;
+    if (!oldPwd || !newPwd || !confirm) { toast('Vui lòng điền đầy đủ thông tin', 'error'); return; }
+    if (newPwd !== confirm) { toast('Mật khẩu mới không khớp!', 'error'); return; }
+    if (newPwd.length < 6) { toast('Mật khẩu mới tối thiểu 6 ký tự', 'error'); return; }
+    const data = await api('account/changePassword', {method:'POST', body: JSON.stringify({old_password:oldPwd, new_password:newPwd})});
+    if (data.status) {
+        toast('Đổi mật khẩu thành công! Hãy đăng nhập lại.', 'success');
+        document.getElementById('pwd-old').value = '';
+        document.getElementById('pwd-new').value = '';
+        document.getElementById('pwd-confirm').value = '';
+    } else {
+        toast(data.message || 'Đổi mật khẩu thất bại', 'error');
+    }
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────

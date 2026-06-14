@@ -43,6 +43,8 @@ CREATE TABLE users (
     role ENUM('admin', 'user') NOT NULL DEFAULT 'user',
     status TINYINT(1) NOT NULL DEFAULT 1,
     avatar VARCHAR(255) NULL,
+    reset_token VARCHAR(255) NULL,
+    token_expiry DATETIME NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

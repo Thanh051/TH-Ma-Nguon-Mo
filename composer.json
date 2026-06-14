@@ -1,0 +1,7 @@
+{
+    "name": "webstore/webstore",
+    "description": "WebStore JWT Integration",
+    "require": {
+        "firebase/php-jwt": "^6.10"
+    }
+}
