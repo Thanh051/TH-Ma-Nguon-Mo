@@ -3,7 +3,7 @@
         'name' => 'webstore/webstore',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '143168705cde98563e2c6b4a48c9876849015387',
+        'reference' => '132fcbabf7379b4731bd63099a1503f806c98590',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -22,7 +22,7 @@
         'webstore/webstore' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '143168705cde98563e2c6b4a48c9876849015387',
+            'reference' => '132fcbabf7379b4731bd63099a1503f806c98590',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

@@ -32,13 +32,26 @@ class PaymentApiController extends BaseApiController {
         }
 
         // Verify order exists
-        $stmt = $this->conn->prepare("SELECT id, total_price FROM orders WHERE id = :id LIMIT 1");
+        $stmt = $this->conn->prepare("SELECT id, total_amount FROM orders WHERE id = :id LIMIT 1");
         $stmt->execute([':id' => $orderId]);
         $order = $stmt->fetch();
         if (!$order) {
             $this->json(['status' => false, 'message' => 'Đơn hàng không tồn tại'], 404);
             return;
         }
+
+        // Ghi nhận thanh toán vào bảng payments
+        $payStmt = $this->conn->prepare(
+            "INSERT INTO payments (order_id, method, amount, status)
+             VALUES (:order_id, :method, :amount, :status)"
+        );
+        $payStatus = ($method === 'cod') ? 'cod_pending' : 'paid';
+        $payStmt->execute([
+            ':order_id' => $orderId,
+            ':method'   => $method,
+            ':amount'   => $order['total_amount'],
+            ':status'   => $payStatus,
+        ]);
 
         $methodLabels = [
             'cod'           => 'Thanh toán khi nhận hàng (COD)',
@@ -52,8 +65,8 @@ class PaymentApiController extends BaseApiController {
             'order_id'       => $orderId,
             'method'         => $method,
             'method_label'   => $methodLabels[$method],
-            'amount'         => $order['total_price'],
-            'payment_status' => $method === 'cod' ? 'cod_pending' : 'paid',
+            'amount'         => $order['total_amount'],
+            'payment_status' => $payStatus,
         ], 201);
     }
 }

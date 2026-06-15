@@ -1,8 +1,3 @@
--- ============================================================
--- WebStore LAB 5&6 - Database chạy với app/config/database.php
--- Database name: My_Store
--- ============================================================
-
 CREATE DATABASE IF NOT EXISTS My_Store CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE My_Store;
 

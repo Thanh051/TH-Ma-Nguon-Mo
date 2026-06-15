@@ -4,8 +4,10 @@ require_once 'app/config/database.php';
 
 /**
  * OrderApiController – adapted for real DB schema:
- * orders: id, user_id, customer_name, email, phone, address, total_price, created_at
+ * orders: id, customer_name, customer_phone, customer_address, total_amount,
+ *         order_status, payment_status, created_at
  * order_details: id, order_id, product_id, quantity, price
+ * payments: id, order_id, method, amount, status, created_at
  */
 class OrderApiController extends BaseApiController {
     private $conn;
@@ -41,13 +43,12 @@ class OrderApiController extends BaseApiController {
         $this->json(['status' => true, 'data' => $orders]);
     }
 
-    // GET /api/order/mine – đơn hàng của user đang đăng nhập
+    // GET /api/order/mine – danh sách đơn hàng (không có cột user_id nên trả về tất cả)
     public function mine() {
         if (!$this->requireMethod('GET')) return;
-        $user = $this->requireAuth();
-        $userId = (int)$user['id'];
-        $stmt = $this->conn->prepare("SELECT * FROM orders WHERE user_id = :uid ORDER BY id DESC");
-        $stmt->execute([':uid' => $userId]);
+        $this->requireAuth();
+        $stmt = $this->conn->prepare("SELECT * FROM orders ORDER BY id DESC");
+        $stmt->execute();
         $orders = $stmt->fetchAll();
         $this->json(['status' => true, 'data' => $orders]);
     }
@@ -55,17 +56,12 @@ class OrderApiController extends BaseApiController {
     // GET /api/order/detail/{id}
     public function detail($id) {
         if (!$this->requireMethod('GET')) return;
-        $user = $this->requireAuth();
+        $this->requireAuth();
         $stmt = $this->conn->prepare("SELECT * FROM orders WHERE id = :id LIMIT 1");
         $stmt->execute([':id' => (int)$id]);
         $order = $stmt->fetch();
         if (!$order) {
             $this->json(['status' => false, 'message' => 'Đơn hàng không tồn tại'], 404);
-            return;
-        }
-        // Chỉ admin hoặc chính chủ mới xem được chi tiết
-        if (($user['role'] ?? '') !== 'admin' && (int)$order['user_id'] !== (int)$user['id']) {
-            $this->json(['status' => false, 'message' => 'Bạn không có quyền xem đơn hàng này'], 403);
             return;
         }
         $detailStmt = $this->conn->prepare(
@@ -105,14 +101,14 @@ class OrderApiController extends BaseApiController {
         try {
             $this->conn->beginTransaction();
 
+            // Chèn đơn hàng – dùng đúng tên cột trong DB:
+            // customer_name, customer_phone, customer_address, total_amount
             $stmt = $this->conn->prepare(
-                "INSERT INTO orders (user_id, customer_name, email, phone, address, total_price)
-                 VALUES (:user_id, :name, :email, :phone, :address, :total)"
+                "INSERT INTO orders (customer_name, customer_phone, customer_address, total_amount)
+                 VALUES (:name, :phone, :address, :total)"
             );
             $stmt->execute([
-                ':user_id' => $this->userId,
                 ':name'    => $name,
-                ':email'   => $email ?: null,
                 ':phone'   => $phone,
                 ':address' => $address,
                 ':total'   => $total,
@@ -132,9 +128,7 @@ class OrderApiController extends BaseApiController {
                 ]);
             }
 
-            // Xóa giỏ hàng session
             $_SESSION[$this->cartKey] = [];
-            // Xóa giỏ hàng trong DB (đã thanh toán xong)
             if ($this->userId) {
                 $this->conn->prepare("DELETE FROM cart WHERE user_id = :uid")
                            ->execute([':uid' => $this->userId]);
@@ -156,17 +150,12 @@ class OrderApiController extends BaseApiController {
     // DELETE /api/order/cancel/{id}
     public function cancel($id) {
         if (!$this->requireMethod('DELETE')) return;
-        $user = $this->requireAuth();
-        $stmt = $this->conn->prepare("SELECT id, user_id FROM orders WHERE id = :id LIMIT 1");
+        $this->requireAuth();
+        $stmt = $this->conn->prepare("SELECT id FROM orders WHERE id = :id LIMIT 1");
         $stmt->execute([':id' => (int)$id]);
         $order = $stmt->fetch();
         if (!$order) {
             $this->json(['status' => false, 'message' => 'Đơn hàng không tồn tại'], 404);
-            return;
-        }
-        // Chỉ admin hoặc chính chủ đơn hàng mới được hủy
-        if (($user['role'] ?? '') !== 'admin' && (int)$order['user_id'] !== (int)$user['id']) {
-            $this->json(['status' => false, 'message' => 'Bạn không có quyền hủy đơn hàng này'], 403);
             return;
         }
         $del = $this->conn->prepare("DELETE FROM orders WHERE id = :id");

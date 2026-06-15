@@ -328,7 +328,7 @@
                 <div class="form-group"><label class="form-label">Tài khoản / Email</label><input type="text" id="login-username" class="form-control" placeholder="Nhập tài khoản..."></div>
                 <div class="form-group"><label class="form-label">Mật khẩu</label><input type="password" id="login-password" class="form-control" placeholder="Nhập mật khẩu..."></div>
                 <button class="btn btn-primary btn-full" onclick="doLogin()" style="margin-top:.5rem"><i class="fas fa-sign-in-alt"></i> Đăng Nhập</button>
-                <p style="margin-top:1rem;font-size:.82rem;color:var(--text-dim);text-align:center">Demo: <strong>admin@gmail.com / 123456</strong></p>
+                <p style="margin-top:1rem;font-size:.82rem;color:var(--text-dim);text-align:center">
             </div>
             <div id="form-register" style="display:none">
                 <div class="form-group"><label class="form-label">Tên tài khoản</label><input type="text" id="reg-username" class="form-control" placeholder="Nhập tên tài khoản..."></div>
@@ -1005,9 +1005,9 @@ async function loadMyOrders() {
                 </div>
             </div>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;font-size:.85rem;color:var(--text-muted)">
-                <div><i class="fas fa-phone"></i> ${o.phone||'–'}</div>
-                <div><i class="fas fa-map-marker-alt"></i> ${o.address||'–'}</div>
-                <div><i class="fas fa-dollar-sign"></i> Tổng: <strong style="color:var(--warning)">${fmtPrice(o.total_price)}</strong></div>
+                <div><i class="fas fa-phone"></i> ${o.customer_phone||'–'}</div>
+                <div><i class="fas fa-map-marker-alt"></i> ${o.customer_address||'–'}</div>
+                <div><i class="fas fa-dollar-sign"></i> Tổng: <strong style="color:var(--warning)">${fmtPrice(o.total_amount)}</strong></div>
                 <div><i class="fas fa-clock"></i> ${fmtDate(o.created_at)}</div>
             </div>
         </div>`;
@@ -1024,15 +1024,14 @@ async function openOrderDetail(id) {
     document.getElementById('modal-order-body').innerHTML=`
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;font-size:.9rem">
             <div><span class="text-muted">Khách hàng:</span><br><strong>${o.customer_name}</strong></div>
-            <div><span class="text-muted">SĐT:</span><br><strong>${o.phone||'–'}</strong></div>
-            ${o.email?`<div><span class="text-muted">Email:</span><br><strong>${o.email}</strong></div>`:''}
-            <div style="grid-column:1/-1"><span class="text-muted">Địa chỉ:</span><br><strong>${o.address||'–'}</strong></div>
+            <div><span class="text-muted">SĐT:</span><br><strong>${o.customer_phone||'–'}</strong></div>
+            <div style="grid-column:1/-1"><span class="text-muted">Địa chỉ:</span><br><strong>${o.customer_address||'–'}</strong></div>
         </div>
         <div class="table-wrap"><table>
             <thead><tr><th>Sản phẩm</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
             <tbody>${rows}</tbody>
             <tfoot><tr><td colspan="3" style="text-align:right;font-weight:700;padding:.75rem 1rem;color:var(--text-muted)">Tổng cộng</td>
-            <td style="padding:.75rem 1rem;font-weight:900;color:var(--warning)">${fmtPrice(o.total_price)}</td></tr></tfoot>
+            <td style="padding:.75rem 1rem;font-weight:900;color:var(--warning)">${fmtPrice(o.total_amount)}</td></tr></tfoot>
         </table></div>`;
 }
 
@@ -1259,9 +1258,9 @@ async function loadAllOrders() {
         <tr>
             <td><strong>#${o.id}</strong></td>
             <td>${o.customer_name}</td>
-            <td>${o.phone||'–'}</td>
-            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.address||'–'}</td>
-            <td style="color:var(--warning);font-weight:600">${fmtPrice(o.total_price)}</td>
+            <td>${o.customer_phone||'–'}</td>
+            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.customer_address||'–'}</td>
+            <td style="color:var(--warning);font-weight:600">${fmtPrice(o.total_amount)}</td>
             <td style="color:var(--text-dim);font-size:.82rem">${fmtDate(o.created_at)}</td>
             <td style="display:flex;gap:.4rem">
                 <button class="btn btn-ghost btn-sm" onclick="openOrderDetail(${o.id})"><i class="fas fa-eye"></i></button>
